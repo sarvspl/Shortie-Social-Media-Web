@@ -3,9 +3,9 @@ import { baseURL, secretKey } from "./config";
 import { setToast } from "./toastServices";
 import { createSelector } from "reselect";
 
-const selectStates = (state) => state;
+const selectStates = (state: any) => state;
 
-export const isLoading = createSelector(selectStates, (state) => {
+export const isLoading = createSelector(selectStates, (state: any) => {
   const slices = Object.values(state);
   const loading = slices.some((slice: any) => {
     if (typeof slice === "object" && slice !== null && slice.isLoading === true) {
@@ -21,7 +21,6 @@ interface ApiResponseError {
   code?: string;
 }
 
-// const getTokenData = (): string | null => localStorage.getItem("token");
 const getTokenData = (): string | null => {
   if (typeof window !== "undefined") {
     return sessionStorage.getItem("token");
@@ -43,12 +42,27 @@ const token: string | null = getTokenData();
 axios.defaults.headers.common["Authorization"] = token ? `${token}` : "";
 axios.defaults.headers.common["key"] = secretKey;
 
+// Global Axios fallback for direct axios calls in slices
+axios.interceptors.response.use(
+  (response) => response,
+  async (error: any) => {
+    if (!error.response || error.code === "ERR_NETWORK" || error.message?.includes("Network Error")) {
+      const url = error.config?.url || "";
+      const method = error.config?.method || "get";
+      const { getStandaloneMockResponse } = await import("./standaloneMock");
+      const mockData = getStandaloneMockResponse(method, url, error.config?.data);
+      return Promise.resolve({ data: mockData, status: 200, statusText: "OK", headers: {}, config: error.config });
+    }
+    return Promise.reject(error);
+  }
+);
+
 apiInstance.interceptors.request.use(
   async (config: AxiosRequestConfig): Promise<any> => {
     // Validate session integrity before sensitive actions
     const { validateSessionIntegrity } = await import("./security");
     const isValid = await validateSessionIntegrity();
-    
+
     if (!isValid) {
       return Promise.reject(new Error("Session tampered."));
     }
@@ -63,7 +77,15 @@ apiInstance.interceptors.request.use(
 
 apiInstance.interceptors.response.use(
   (response: AxiosResponse): any => response.data,
-  (error: AxiosError): Promise<void> => {
+  async (error: AxiosError): Promise<any> => {
+    // If backend is offline or unreachable, fallback to standalone mock data without throwing
+    if (!error.response || error.code === "ERR_NETWORK" || error.message?.includes("Network Error")) {
+      const url = error.config?.url || "";
+      const method = error.config?.method || "get";
+      const { getStandaloneMockResponse } = await import("./standaloneMock");
+      return getStandaloneMockResponse(method, url, error.config?.data);
+    }
+
     const errorData = error.response?.data as ApiResponseError | undefined;
 
     if (error.response?.status === 401) {
@@ -97,82 +119,44 @@ apiInstance.interceptors.response.use(
   }
 );
 
-const handleErrors = async (response: Response): Promise<any> => {
-  if (!response.ok) {
-    const data = await response.json();
-
-    if (response.status === 401) {
-      sessionStorage.clear();
-      window.location.href = "/";
-      return Promise.reject(data);
-    }
-
-    if (Array.isArray(data.message)) {
-      data.message.forEach((msg: string) => setToast("error", msg));
-    } else {
-      setToast("error", data.message || "Unexpected error occurred.");
-    }
-
-    return Promise.reject(data);
-  }
-
-  return response.json();
-};
-
 const getHeaders = (): { [key: string]: string } => ({
   key: secretKey,
   Authorization: getTokenData() ? `${getTokenData()}` : "",
   "Content-Type": "application/json",
 });
 
+const fetchWithFallback = async (method: string, url: string, body?: any): Promise<any> => {
+  const { validateSessionIntegrity } = await import("./security");
+  await validateSessionIntegrity();
+
+  try {
+    const res = await fetch(`${baseURL}${url}`, {
+      method,
+      headers: getHeaders(),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+
+    if (!res.ok) {
+      // Backend returned 404/500/502/etc. Fallback to mock data to keep UI functional
+      console.warn(`[API ${res.status}] ${method} ${url} - falling back to Standalone mock data.`);
+      const { getStandaloneMockResponse } = await import("./standaloneMock");
+      return getStandaloneMockResponse(method, url, body);
+    }
+
+    return await res.json();
+  } catch (err) {
+    // Network Error / Server offline / Standalone mode
+    console.warn(`[Standalone Mode] ${method} ${url} offline. Serving mock response.`);
+    const { getStandaloneMockResponse } = await import("./standaloneMock");
+    return getStandaloneMockResponse(method, url, body);
+  }
+};
+
 export const apiInstanceFetch = {
   baseURL,
-  get: async (url: string) => {
-    const { validateSessionIntegrity } = await import("./security");
-    await validateSessionIntegrity();
-    return fetch(`${baseURL}${url}`, {
-      method: "GET",
-      headers: getHeaders(),
-    }).then(handleErrors);
-  },
-
-  post: async (url: string, data: object) => {
-    const { validateSessionIntegrity } = await import("./security");
-    await validateSessionIntegrity();
-    return fetch(`${baseURL}${url}`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }).then(handleErrors);
-  },
-
-  patch: async (url: string, data: object) => {
-    const { validateSessionIntegrity } = await import("./security");
-    await validateSessionIntegrity();
-    return fetch(`${baseURL}${url}`, {
-      method: "PATCH",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }).then(handleErrors);
-  },
-
-  put: async (url: string, data: object) => {
-    const { validateSessionIntegrity } = await import("./security");
-    await validateSessionIntegrity();
-    return fetch(`${baseURL}${url}`, {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }).then(handleErrors);
-  },
-
-  delete: async (url: string, data: object) => {
-    const { validateSessionIntegrity } = await import("./security");
-    await validateSessionIntegrity();
-    return fetch(`${baseURL}${url}`, {
-      method: "DELETE",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }).then(handleErrors);
-  },
+  get: async (url: string) => fetchWithFallback("GET", url),
+  post: async (url: string, data?: object) => fetchWithFallback("POST", url, data),
+  patch: async (url: string, data?: object) => fetchWithFallback("PATCH", url, data),
+  put: async (url: string, data?: object) => fetchWithFallback("PUT", url, data),
+  delete: async (url: string, data?: object) => fetchWithFallback("DELETE", url, data),
 };

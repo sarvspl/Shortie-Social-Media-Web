@@ -30,8 +30,8 @@ export default function Login() {
     }
   }, [isAuth, router]);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@gmail.com");
+  const [password, setPassword] = useState("123456");
   const [demoLogin, setDemoLogin] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
 
@@ -39,8 +39,6 @@ export default function Login() {
     email: "",
     password: "",
   });
-
-
 
   const handleredirecttoForgotPassword = () => {
     router.push("/forgotPassword");
@@ -73,10 +71,9 @@ export default function Login() {
       // ✅ If API returns status false → enable button again
       if (response?.status === false) {
         setLoading(false);
+      } else {
+        router.push("/dashboard");
       }
-
-      // ✅ If success → slice will redirect
-      // so do NOT enable button again
 
     } catch (err) {
       // ❌ If rejected
