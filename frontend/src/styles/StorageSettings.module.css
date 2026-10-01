@@ -1,0 +1,173 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 500;
+  color: #101828;
+  margin-bottom: 4px;
+}
+
+.subHeading {
+  font-size: 14px;
+  color: #667085;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.optionCard {
+  width: 100%;
+  position: relative;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid #E4E7EC;
+  background: #fff;
+  text-align: left;
+  transition: all .2s ease;
+  cursor: pointer;
+}
+
+.optionCard:hover {
+  border-color: #6c5ce7;
+}
+
+.optionSelected {
+  border-color: #6c5ce7;
+  background: #f1f0ff;
+}
+
+.iconBox {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  background: #F8F9FC;
+  color: #6c5ce7;
+}
+
+.iconSelected {
+  background: #6c5ce7;
+  color: #fff;
+}
+
+.optionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #101828;
+}
+
+.optionDesc {
+  font-size: 12px;
+  color: #667085;
+}
+
+.checkIcon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #6c5ce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.recommended {
+  margin-top: 10px;
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 4px;
+  background: #12B76A20;
+  color: #12B76A;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.localBox {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.successIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #12B76A20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #12B76A;
+}
+
+.localTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #101828;
+}
+
+.localText {
+  font-size: 14px;
+  color: #667085;
+}
+
+.code {
+  background: #F8F9FC;
+  padding: 2px 6px;
+  margin-left: 4px;
+  border-radius: 4px;
+}
+
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.formGrid,
+.grid {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .heading {
+    font-size: 16px;
+  }
+
+  .optionCard {
+    padding: 16px;
+  }
+
+  .localBox {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .localTitle {
+    font-size: 15px;
+  }
+
+  .localText {
+    font-size: 13px;
+  }
+}

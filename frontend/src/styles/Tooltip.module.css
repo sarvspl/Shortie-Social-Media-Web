@@ -1,0 +1,26 @@
+.tooltipContent{
+  background:#6c5ce7;
+  color:white;
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:6px;
+  max-width:220px;
+  line-height:1.4;
+  z-index:50;
+  animation:fadeIn 0.15s ease;
+}
+
+.arrow{
+  fill:#6c5ce7;
+}
+
+@keyframes fadeIn{
+  from{
+    opacity:0;
+    transform:scale(0.95);
+  }
+  to{
+    opacity:1;
+    transform:scale(1);
+  }
+}

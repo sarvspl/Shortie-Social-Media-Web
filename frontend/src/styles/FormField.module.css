@@ -1,0 +1,91 @@
+.wrapper{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.labelRow{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.label{
+  font-size:13px;
+  font-weight:500;
+  color:#101828;
+}
+
+.required{
+  color:#F04438;
+  margin-left:4px;
+}
+
+.tooltipIcon{
+  color:#667085;
+  cursor:pointer;
+}
+
+.tooltipText{
+  font-size:12px;
+  max-width:200px;
+}
+
+.inputWrapper{
+  position:relative;
+}
+
+.icon{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#667085;
+}
+ 
+.rightIcon{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#667085;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.input{
+  height:36px;
+  background:#fff;
+  border:1px solid #E4E7EC;
+  font-size:13px;
+  padding:0 12px;
+  border-radius:8px;
+}
+
+.input:focus{
+  border-color:#6c5ce7;
+  outline:none;
+  box-shadow:0 0 0 2px rgba(108,92,231,0.1);
+}
+
+.inputWithIcon{
+  padding-left:36px;
+}
+
+.inputWithRightIcon{
+  padding-right:36px;
+}
+
+.helper{
+  font-size:11px;
+  color:#667085;
+}
+
+.example{
+  font-size: 11px;
+  color: #c4260a;
+  margin-top: 2px;
+  margin-left: 5px;
+}

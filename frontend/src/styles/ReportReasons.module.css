@@ -1,0 +1,160 @@
+.wrapper{
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+
+.headerRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 200px; 
+}
+
+.title{
+  font-size:18px;
+  font-weight:500;
+  color:#101828;
+}
+
+.subtitle{
+  font-size:14px;
+  color:#667085;
+}
+
+.addBtn{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:#6c5ce7;
+  color:white;
+  white-space: nowrap;
+}
+
+.searchBox{
+  position:relative;
+  margin-bottom:20px;
+}
+
+.searchIcon{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#667085;
+  z-index: 1;
+}
+
+.searchInput{
+  padding-left:34px !important;
+  width: 100%;
+}
+
+.tableResponsive {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #E4E7EC;
+  border-radius: 8px;
+}
+
+.tableResponsive::-webkit-scrollbar {
+  height: 2px;
+  width: 2px;
+}
+
+.tableWrapper{
+ min-height: 500px;
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.table th, .table td {
+  border-bottom: 1px solid #E4E7EC;
+  padding: 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table th{
+  background:#F8F9FC;
+  text-align:center;
+  font-size:14px;
+  font-weight:500;
+  padding:12px;
+  color:#101828;
+}
+
+.table td{
+  padding:12px;
+  font-size:14px;
+  color:#667085;
+  text-align:center;
+}
+
+.reasonTitle{
+  font-weight:500;
+  color:#101828;
+}
+
+.actions{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+}
+
+.editBtn{
+  border:none;
+  background:transparent;
+  cursor:pointer;
+}
+
+.editBtn:hover{
+  color:#6c5ce7;
+}
+
+.deleteBtn{
+  border:none;
+  background:transparent;
+  cursor:pointer;
+}
+
+.deleteBtn:hover{
+  color:#F04438;
+}
+
+.emptyState{
+  text-align:center;
+  padding:40px;
+  color:#667085;
+}
+
+@media (max-width: 480px) {
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .addBtn {
+    width: 100%; 
+    justify-content: center;
+  }
+
+  .table th, .table td {
+    padding: 10px 8px;
+  }
+}

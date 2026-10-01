@@ -1,0 +1,129 @@
+.wrapper{
+  display:flex;
+  flex-direction:column;
+  gap:28px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+.gatewayWrapper{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.gatewayHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.gatewayInfo{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.logoBox{
+  width:48px;
+  height:48px;
+  border-radius:10px;
+  border:1px solid #E4E7EC;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.logoBox img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.gatewayTitle{
+  font-size:16px;
+  font-weight:600;
+  color:#101828;
+}
+
+.gatewayDesc{
+  font-size:12px;
+  color:#667085;
+}
+
+.toggleArea{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.enabled{
+  font-size:12px;
+  font-weight:500;
+  color:#12B76A;
+}
+
+.disabled{
+  font-size:12px;
+  font-weight:500;
+  color:#667085;
+}
+
+.gatewayBody{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.platformGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.platformCard{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px;
+  background:#F8F9FC;
+  border:1px solid #E4E7EC;
+  border-radius:8px;
+}
+
+.platformInfo{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:13px;
+  font-weight:500;
+  color:#101828;
+}
+
+.formArea{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.saveRow{
+  display:flex;
+  justify-content:flex-end;
+}
+
+@media (max-width: 576px) {
+  .platformGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 320px) {
+  .smallToggle {
+    transform: scale(0.8);
+  }
+}

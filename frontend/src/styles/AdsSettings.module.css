@@ -1,0 +1,124 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.headerLeft {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.iconCircle {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 50%;
+  background: #f1f0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6C5CE7;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #101828;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #667085;
+}
+
+.switchArea {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.switchList {
+  display: flex;
+  flex-direction: column;
+}
+
+.switchRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #E4E7EC;
+  gap: 10px
+}
+
+.switchRow:last-child {
+  border-bottom: none;
+}
+
+.switchRow label {
+  font-size: 14px;
+  color: #344054;
+  cursor: pointer;
+  flex: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.frequencyBox {
+  max-width: 400px;
+}
+
+.frequencyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.frequencyInput {
+  width: 80px;
+  /* height:40px; */
+  text-align: center;
+}
+
+.frequencyText {
+  font-size: 12px;
+  color: #667085;
+}
+
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+@media (max-width: 480px) {
+  .headerRow {
+    flex-direction: row;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+}

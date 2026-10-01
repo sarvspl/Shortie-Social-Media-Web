@@ -1,0 +1,110 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+/* Disabled */
+.button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Focus */
+.button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25);
+}
+
+/* ================= VARIANTS ================= */
+
+/* Default */
+.default {
+  background: #6c5ce7;
+  color: #ffffff;
+}
+
+.default:hover {
+  background: #5a4bc6;
+}
+
+/* Destructive */
+.destructive {
+  background: #6c5ce7;
+  color: #ffffff;
+}
+
+.destructive:hover {
+  background: #5a4bc6;
+}
+
+/* Outline */
+.outline {
+  background: #ffffff;
+  border: 1px solid #E4E7EC;
+  color: #101828;
+}
+
+.outline:hover {
+  background: #f9fafb;
+}
+
+/* Secondary */
+.secondary {
+  background: #f2f4f7;
+  color: #101828;
+}
+
+.secondary:hover {
+  background: #e4e7ec;
+}
+
+/* Ghost */
+.ghost {
+  background: transparent;
+  color: #101828;
+}
+
+.ghost:hover {
+  background: #f2f4f7;
+}
+
+/* Link */
+.link {
+  background: transparent;
+  color: #6c5ce7;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* ================= SIZES ================= */
+
+.defaultSize {
+  height: 36px;
+  padding: 0 16px;
+}
+
+.sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.lg {
+  height: 40px;
+  padding: 0 24px;
+}
+
+.icon {
+  height: 36px;
+  width: 36px;
+  padding: 0;
+}

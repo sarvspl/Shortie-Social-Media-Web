@@ -1,0 +1,108 @@
+[{
+  "_id": {
+    "$oid": "69b802957ce260db3defc403"
+  },
+  "languageTitle": "English",
+  "languageCode": "en",
+  "localLanguageTitle": "English",
+  "languageIcon": "",
+  "errorCount": 0,
+  "isActive": true,
+  "isDefault": true,
+  "createdAt": {
+    "$date": "2026-03-16T13:16:05.036Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-26T17:20:12.327Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69b802a47ce260db3defc605"
+  },
+  "languageTitle": "French",
+  "languageCode": "fr",
+  "localLanguageTitle": "Français",
+  "languageIcon": "",
+  "errorCount": 0,
+  "isActive": true,
+  "isDefault": false,
+  "createdAt": {
+    "$date": "2026-03-16T13:16:20.713Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-26T17:20:24.586Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69b802bb7ce260db3defc8d4"
+  },
+  "languageTitle": "Spanish",
+  "languageCode": "es",
+  "localLanguageTitle": "Spanish",
+  "languageIcon": "",
+  "errorCount": 0,
+  "isActive": true,
+  "isDefault": false,
+  "createdAt": {
+    "$date": "2026-03-16T13:16:43.318Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-26T17:20:31.835Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69b803597ce260db3defd9d0"
+  },
+  "languageTitle": "Hindi",
+  "languageCode": "hi",
+  "localLanguageTitle": "Hindi",
+  "languageIcon": "",
+  "errorCount": 0,
+  "isActive": true,
+  "isDefault": false,
+  "createdAt": {
+    "$date": "2026-03-16T13:19:21.392Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-26T17:21:21.121Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69b8dd4c2d6d39c97dade48e"
+  },
+  "languageTitle": "Arabic",
+  "languageCode": "ar",
+  "localLanguageTitle": "Arabic",
+  "languageIcon": "",
+  "errorCount": 0,
+  "isActive": true,
+  "isDefault": false,
+  "createdAt": {
+    "$date": "2026-03-17T04:49:16.658Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-26T17:18:27.217Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69b8f2cb2d6d39c97dae190a"
+  },
+  "languageTitle": "Chinese",
+  "languageCode": "zh",
+  "localLanguageTitle": "Chinese",
+  "languageIcon": "",
+  "errorCount": 0,
+  "isActive": true,
+  "isDefault": false,
+  "createdAt": {
+    "$date": "2026-03-17T06:20:59.719Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-26T17:17:24.239Z"
+  }
+}]
