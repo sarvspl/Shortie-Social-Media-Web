@@ -90,6 +90,12 @@ export default function Login() {
   };
 
   useEffect(() => {
+    const token = sessionStorage.getItem("token") || "";
+    if (token.includes("standalone_signature")) {
+      sessionStorage.clear();
+      return;
+    }
+
     const isAuth = sessionStorage.getItem("isAuth") === "true";
 
     if (isAuth) {

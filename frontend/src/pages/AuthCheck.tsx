@@ -37,6 +37,13 @@ const AuthCheck = (props: any) => {
       const { checkPermission } = await import("@/util/permissionHelper");
 
       // 3. Hydrate state if valid
+      const storedToken = sessionStorage.getItem("token") || "";
+      if (storedToken.includes("standalone_signature")) {
+        sessionStorage.clear();
+        router.push("/");
+        return;
+      }
+
       const storedIsAuth = sessionStorage.getItem("isAuth");
       const isAuth = storedIsAuth === "true";
 

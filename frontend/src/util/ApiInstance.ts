@@ -42,11 +42,11 @@ const token: string | null = getTokenData();
 axios.defaults.headers.common["Authorization"] = token ? `${token}` : "";
 axios.defaults.headers.common["key"] = secretKey;
 
-// Global Axios fallback for direct axios calls in slices
+// Global Axios fallback for direct axios calls in slices (only on network connection failure)
 axios.interceptors.response.use(
   (response) => response,
   async (error: any) => {
-    if (!error.response || error.code === "ERR_NETWORK" || error.message?.includes("Network Error")) {
+    if (!error.response && (error.code === "ERR_NETWORK" || error.message?.includes("Network Error"))) {
       const url = error.config?.url || "";
       const method = error.config?.method || "get";
       const { getStandaloneMockResponse } = await import("./standaloneMock");
@@ -59,7 +59,6 @@ axios.interceptors.response.use(
 
 apiInstance.interceptors.request.use(
   async (config: AxiosRequestConfig): Promise<any> => {
-    // Validate session integrity before sensitive actions
     const { validateSessionIntegrity } = await import("./security");
     const isValid = await validateSessionIntegrity();
 
@@ -78,8 +77,8 @@ apiInstance.interceptors.request.use(
 apiInstance.interceptors.response.use(
   (response: AxiosResponse): any => response.data,
   async (error: AxiosError): Promise<any> => {
-    // If backend is offline or unreachable, fallback to standalone mock data without throwing
-    if (!error.response || error.code === "ERR_NETWORK" || error.message?.includes("Network Error")) {
+    // Only fallback if backend is completely offline / unreachable
+    if (!error.response && (error.code === "ERR_NETWORK" || error.message?.includes("Network Error"))) {
       const url = error.config?.url || "";
       const method = error.config?.method || "get";
       const { getStandaloneMockResponse } = await import("./standaloneMock");
@@ -92,7 +91,10 @@ apiInstance.interceptors.response.use(
       sessionStorage.clear();
       axios.defaults.headers.common["key"] = "";
       axios.defaults.headers.common["Authorization"] = "";
-      window.location.href = "/";
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+      return Promise.reject(error);
     }
 
     if (!errorData) {
@@ -106,7 +108,9 @@ apiInstance.interceptors.response.use(
 
     if (errorData.code === "E_USER_NOT_FOUND" || errorData.code === "E_UNAUTHORIZED") {
       sessionStorage.clear();
-      window.location.reload();
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     }
 
     if (typeof errorData.message === "string") {
@@ -136,19 +140,33 @@ const fetchWithFallback = async (method: string, url: string, body?: any): Promi
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
 
+    if (res.status === 401) {
+      if (typeof window !== "undefined") {
+        sessionStorage.clear();
+        window.location.href = "/";
+      }
+      return Promise.reject({ status: false, message: "Session expired. Please login again." });
+    }
+
     if (!res.ok) {
-      // Backend returned 404/500/502/etc. Fallback to mock data to keep UI functional
-      console.warn(`[API ${res.status}] ${method} ${url} - falling back to Standalone mock data.`);
-      const { getStandaloneMockResponse } = await import("./standaloneMock");
-      return getStandaloneMockResponse(method, url, body);
+      const errData = await res.json().catch(() => ({ message: res.statusText }));
+      return Promise.reject(errData);
     }
 
     return await res.json();
-  } catch (err) {
-    // Network Error / Server offline / Standalone mode
-    console.warn(`[Standalone Mode] ${method} ${url} offline. Serving mock response.`);
-    const { getStandaloneMockResponse } = await import("./standaloneMock");
-    return getStandaloneMockResponse(method, url, body);
+  } catch (err: any) {
+    // Only fallback to standalone mock if backend is completely offline (Network Error / Connection Refused)
+    if (
+      err?.name === "TypeError" ||
+      err?.message?.includes("Failed to fetch") ||
+      err?.message?.includes("NetworkError") ||
+      err?.code === "ECONNREFUSED"
+    ) {
+      console.warn(`[Standalone Mode] Backend offline for ${method} ${url}. Serving mock response.`);
+      const { getStandaloneMockResponse } = await import("./standaloneMock");
+      return getStandaloneMockResponse(method, url, body);
+    }
+    throw err;
   }
 };
 
