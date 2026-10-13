@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, AxiosResponse } from "axios";
-import { baseURL, secretKey } from "./config";
+import { baseURL, secretKey, isStandaloneMode } from "./config";
 import { setToast } from "./toastServices";
 import { createSelector } from "reselect";
 
@@ -28,12 +28,31 @@ const getTokenData = (): string | null => {
   return null;
 };
 
+const standaloneAdapter = async (config: any) => {
+  const method = config.method || "get";
+  const url = config.url || "";
+  const { getStandaloneMockResponse } = await import("./standaloneMock");
+  const mockData = getStandaloneMockResponse(method, url, config.data);
+  return {
+    data: mockData,
+    status: 200,
+    statusText: "OK",
+    headers: {},
+    config,
+  };
+};
+
+if (isStandaloneMode) {
+  axios.defaults.adapter = standaloneAdapter as any;
+}
+
 export const apiInstance: AxiosInstance = axios.create({
   baseURL,
   headers: {
     secretKey,
     "Content-Type": "application/json",
   },
+  ...(isStandaloneMode ? { adapter: standaloneAdapter as any } : {}),
 });
 
 const cancelTokenSource = axios.CancelToken.source();
@@ -130,6 +149,11 @@ const getHeaders = (): { [key: string]: string } => ({
 });
 
 const fetchWithFallback = async (method: string, url: string, body?: any): Promise<any> => {
+  if (isStandaloneMode) {
+    const { getStandaloneMockResponse } = await import("./standaloneMock");
+    return getStandaloneMockResponse(method, url, body);
+  }
+
   const { validateSessionIntegrity } = await import("./security");
   await validateSessionIntegrity();
 

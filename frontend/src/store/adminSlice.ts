@@ -6,7 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { setToast } from "@/util/toast";
 import { SetDevKey } from "@/util/setAuthAxios";
-import { secretKey } from "@/util/config";
+import { secretKey, isStandaloneMode } from "@/util/config";
 import axios from "axios";
 import { generatePermissionHash } from "@/util/security";
 
@@ -62,6 +62,14 @@ export const login = createAsyncThunk(
   "admin/admin/login",
   async (payload: AllUsersPayload | undefined, { rejectWithValue }) => {
     try {
+      if (isStandaloneMode) {
+        const { getStandaloneMockResponse, createStandaloneToken } = await import("@/util/standaloneMock");
+        const mockRes = getStandaloneMockResponse("POST", "admin/admin/login", payload);
+        const token = createStandaloneToken(payload?.email || "admin@gmail.com");
+        const permissionsHash = await generatePermissionHash([], "admin");
+        return { ...mockRes, token, permissionsHash };
+      }
+
       const res: any = await apiInstanceFetch.post("admin/admin/login", payload);
       
       if (res && (res.status === true || res.token || res.data)) {

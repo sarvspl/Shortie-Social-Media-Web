@@ -7,7 +7,7 @@ import Image from "next/image";
 import { adminProfileGet } from "../../store/adminSlice";
 import MenuIcon from "@mui/icons-material/Menu";
 import { RootStore, useAppDispatch } from "../../store/store";
-import { baseURL, projectName } from "@/util/config";
+import { baseURL } from "@/util/config";
 
 const Navbar = () => {
   const [showImage, setShowImage] = useState<string>();

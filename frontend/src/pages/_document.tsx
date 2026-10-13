@@ -1,5 +1,4 @@
 "use client";
-import { projectName } from "@/util/config";
 import { Html, Head, Main, NextScript } from "next/document";
 import Script from "next/script";
 
@@ -7,7 +6,7 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <title>{projectName}</title>
+        <title>Admin Panel</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 
         <link

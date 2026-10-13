@@ -75,7 +75,6 @@ const changePassword = () => {
                 <div className="login-page-box ">
                   <div className="login-box-img">
                     <img src="/images/noImage.png" alt="logo" width={40} />
-                    <h5>{projectName}</h5>
                   </div>
                   <div className="login-form">
                     <h6>Change Password</h6>

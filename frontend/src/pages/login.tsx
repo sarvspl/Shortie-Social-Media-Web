@@ -90,12 +90,6 @@ export default function Login() {
   };
 
   useEffect(() => {
-    const token = sessionStorage.getItem("token") || "";
-    if (token.includes("standalone_signature")) {
-      sessionStorage.clear();
-      return;
-    }
-
     const isAuth = sessionStorage.getItem("isAuth") === "true";
 
     if (isAuth) {
@@ -132,7 +126,7 @@ export default function Login() {
               <h2 className="fw-semibold">Login to your account</h2>
               <p className="text-secondary">
                 Let's connect, chat, and spark real connections. Enter your
-                credentials to continue your journey on {projectName}.
+                credentials to continue your journey.
               </p>
               <form>
                 <Input

@@ -63,16 +63,6 @@ function ForgotPassword(props) {
               <div className="login-page-box ">
                 <div className="login-box-img">
                   <img src="/images/noImage.png" alt="logo" width={40} />
-                  <h3
-                    className="custom-shortie-color"
-                    style={{
-                      fontWeight: 900,
-                      fontSize: "30px",
-                      paddingLeft: "15px",
-                    }}
-                  >
-                    {projectName}
-                  </h3>
                 </div>
                 <div className="login-form">
                   <h6>Forgot Password</h6>

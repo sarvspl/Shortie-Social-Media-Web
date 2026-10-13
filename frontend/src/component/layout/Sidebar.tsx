@@ -19,7 +19,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { warning } from "@/util/Alert";
 import { setToast } from "@/util/toast";
-import { projectName } from "@/util/config";
 import axios from "axios";
 import { useAppDispatch } from "@/store/store";
 import { logoutApi } from "@/store/adminSlice";
@@ -330,9 +329,6 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
               className="d-flex align-items-center cursor-pointer"
             >
               <img src="/images/noImage.png" alt="logo" width={35} />
-              <span className="fs-4 fw-semibold projectNameText">
-                {projectName}
-              </span>
             </Link>
           </div>
           {/* ======= Navigation ======= */}
