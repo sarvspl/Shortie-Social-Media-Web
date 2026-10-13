@@ -1,6 +1,9 @@
-export const baseURL: string = "https://shortie.sarstage.online/api/";
-export const secretKey: string = "5TIvw5cpc0";
-export const projectName: string = "Shortie";
-// Standalone Mode: Set to true to run fully offline / without database for cPanel hosting.
-// When your senior sets up the new database later, switch this to false and set the new baseURL.
-export const isStandaloneMode: boolean = false;
+export const baseURL: string = process.env.NEXT_PUBLIC_BASE_URL || "https://shortie.sarstage.online/api/";
+export const secretKey: string = process.env.NEXT_PUBLIC_SECRET_KEY || "5TIvw5cpc0";
+export const projectName: string = process.env.NEXT_PUBLIC_PROJECT_NAME || "Shortie";
+
+// Standalone Mode: Set to true to run fully offline / without database for preview.
+export const isStandaloneMode: boolean =
+  process.env.NEXT_PUBLIC_STANDALONE !== undefined
+    ? process.env.NEXT_PUBLIC_STANDALONE === "true"
+    : false;
