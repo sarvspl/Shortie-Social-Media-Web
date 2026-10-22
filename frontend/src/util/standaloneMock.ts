@@ -1,4 +1,4 @@
-// Standalone / Offline Mock Service for Shortie Admin Panel
+// Standalone / Offline Mock Service for Connect Admin Panel
 // Allows the admin panel to run completely offline without requiring MongoDB or any database.
 
 export const createStandaloneToken = (email: string = "admin@gmail.com", name: string = "Admin"): string => {
@@ -127,7 +127,7 @@ export const sampleUsers = [
 export const samplePosts = [
   {
     _id: "post_101",
-    caption: "Welcome to Shortie! Exciting new updates rolling out soon #viral #community",
+    caption: "Welcome to Connect! Exciting new updates rolling out soon #viral #community",
     postImage: "/images/loginimage2.png",
     userId: { _id: "usr_101", name: "Alex Johnson", userName: "alex_j", uniqueId: "UID_1001", image: "/images/user.png" },
     user: { _id: "usr_101", name: "Alex Johnson", userName: "alex_j", uniqueId: "UID_1001", image: "/images/user.png" },
@@ -355,7 +355,7 @@ export const sampleBanners = [
   {
     _id: "ban_1",
     image: "/images/loginimage2.png",
-    url: "https://shortie.app/promo",
+    url: "https://connect.app/promo",
     isActive: true,
     createdAt: "2026-09-01T00:00:00.000Z",
   },
@@ -375,7 +375,7 @@ export const sampleStaff = [
   {
     _id: "staff_1",
     name: "Admin Staff",
-    email: "staff@shortie.app",
+    email: "staff@connect.app",
     role: { _id: "role_2", name: "Moderator" },
     isActive: true,
     createdAt: "2026-09-15T00:00:00.000Z",
@@ -400,8 +400,8 @@ export const sampleStories = [
 export const sampleSettings = {
   _id: "setting_standalone_1",
   appName: "",
-  privacyPolicyLink: "https://shortie.app/privacy",
-  termsOfUsePolicyLink: "https://shortie.app/terms",
+  privacyPolicyLink: "",
+  termsOfUsePolicyLink: "",
   isAppActive: true,
   loginBonus: 100,
   isFakeData: false,

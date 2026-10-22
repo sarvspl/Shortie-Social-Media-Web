@@ -1066,7 +1066,7 @@ function _0x2b32() {
     "ration:\x20no",
     "Sub\x20Admin\x20",
     "<table\x20bor",
-    "Shortie",
+    "Connect",
     "t\x27s\x20get\x20yo",
     "ZzAcM",
     "a[x-apple-",

@@ -1,4 +1,4 @@
-# Shortie - Web & API Platform
+# Connect - Web & API Platform
 
 This repository contains the backend REST API server, real-time WebSocket engine, database seed configurations, and the Next.js admin management panel.
 

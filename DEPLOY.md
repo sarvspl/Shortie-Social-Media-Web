@@ -1,6 +1,6 @@
-# Deploying Shortie on WHM (pm2 + nginx)
+# Deploying Connect on WHM (pm2 + nginx)
 
-Target: **https://shortie.sarstage.online**
+Target: **https://connect.sarstage.online**
 Backend (Express API) → port **4005** · Frontend (Next.js admin panel) → port **4006**
 One domain; nginx reverse-proxies `/api/` to the backend and `/` to the frontend.
 
@@ -9,12 +9,12 @@ One domain; nginx reverse-proxies `/api/` to the backend and `/` to the frontend
 - Node.js **20 LTS** (Next.js 16 needs Node ≥ 18.18; use 20). Check: `node -v`.
 - pm2 installed globally: `npm i -g pm2`
 - A MongoDB database (Atlas or self-hosted) and its connection string.
-- DNS: `shortie.sarstage.online` A-record points to this server.
+- DNS: `connect.sarstage.online` A-record points to this server.
 - An SSL cert for the domain (WHM AutoSSL, or certbot).
 
 ## 1. Upload the project
 
-Put the repo on the server, e.g. `/home/<cpuser>/apps/shortie`. The commands
+Put the repo on the server, e.g. `/home/<cpuser>/apps/connect`. The commands
 below run from that directory (the one containing `backend/`, `frontend/`,
 `ecosystem.config.js`).
 
@@ -29,7 +29,7 @@ secrets** (do not commit it):
 
 `secretKey` must stay equal to the `secretKey` in
 `frontend/src/util/config.ts` (currently `5TIvw5cpc0`). The frontend's
-`baseURL` is already set to `https://shortie.sarstage.online/api/` and
+`baseURL` is already set to `https://connect.sarstage.online/api/` and
 `isStandaloneMode` is `false`.
 
 > The frontend `baseURL` and `secretKey` are compiled into the browser bundle
@@ -76,7 +76,7 @@ curl -s http://127.0.0.1:4005/admin/...  # backend (any known route)
 
 ## 6. nginx
 
-Copy `deploy/nginx-shortie.conf` to `/etc/nginx/conf.d/shortie.conf` and fix
+Copy `deploy/nginx-connect.conf` to `/etc/nginx/conf.d/connect.conf` and fix
 the two `ssl_certificate*` paths to your real cert.
 
 On **WHM / EA-Nginx**: don't drop a full `server {}` block (WHM generates its
@@ -93,9 +93,9 @@ nginx -t && systemctl reload nginx
 
 ## 7. Verify
 
-- https://shortie.sarstage.online → admin panel loads
+- https://connect.sarstage.online → admin panel loads
 - Log in with the admin from `seed_admin.js`
-- Network tab: API calls hit `https://shortie.sarstage.online/api/admin/...` and return 200
+- Network tab: API calls hit `https://connect.sarstage.online/api/admin/...` and return 200
 
 ## Updating later
 
@@ -108,7 +108,7 @@ pm2 reload ecosystem.config.js
 
 - `/api/` strips its prefix (trailing slash on `proxy_pass`), so backend routes
   stay `/admin`, `/client`, `/uploads`. Uploaded media is served at
-  `https://shortie.sarstage.online/api/uploads/...`.
+  `https://connect.sarstage.online/api/uploads/...`.
 - Ports 4005/4006 are bound to `127.0.0.1` via pm2/HOSTNAME and never exposed
   publicly — only nginx (443) faces the internet.
 - `backend/.env` and `.next/` are gitignored; keep `.env` secret.

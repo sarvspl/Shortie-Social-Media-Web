@@ -61,7 +61,7 @@ function _0x1dc0() {
     "replace",
     "3125560xuchxP",
     "21438PtAHRR",
-    "Shortie",
+    "Connect",
     "or-create",
     "message",
     "2207849LAEzTm",

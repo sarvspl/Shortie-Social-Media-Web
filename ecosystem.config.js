@@ -1,9 +1,9 @@
-// pm2 process manifest for shortie.sarstage.online
+// pm2 process manifest for connect.sarstage.online
 // Run from this directory:  pm2 start ecosystem.config.js
 module.exports = {
   apps: [
     {
-      name: "shortie-backend",
+      name: "connect-backend",
       cwd: "./backend",
       script: "index.js",
       instances: 1,
@@ -15,7 +15,7 @@ module.exports = {
       max_memory_restart: "500M",
     },
     {
-      name: "shortie-frontend",
+      name: "connect-frontend",
       cwd: "./frontend",
       // Next.js standalone server (produced by: npm run build:standalone)
       script: ".next/standalone/server.js",

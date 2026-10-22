@@ -116,7 +116,7 @@ exports.loginOrSignUp = async (req, res) => {
     }
 
     if (!req.body.fcmToken) {
-      req.body.fcmToken = "shortie_default_token";
+      req.body.fcmToken = "connect_default_token";
     }
 
     let userQuery;
