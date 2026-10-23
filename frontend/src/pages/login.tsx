@@ -116,7 +116,7 @@ export default function Login() {
             <div className="w-50 w-md-100">
               <div>
                 <img
-                  src="/images/noImage.png"
+                  src="/images/logo.png"
                   alt="Logo"
                   className="mb-2"
                   height={75}
@@ -235,3 +235,4 @@ export default function Login() {
     </>
   );
 }
+

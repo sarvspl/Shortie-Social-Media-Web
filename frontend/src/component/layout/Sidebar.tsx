@@ -328,7 +328,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
               href="/dashboard"
               className="d-flex align-items-center cursor-pointer"
             >
-              <img src="/images/noImage.png" alt="logo" width={35} />
+              <img src="/images/logo.png" alt="logo" width={35} />
             </Link>
           </div>
           {/* ======= Navigation ======= */}
@@ -878,3 +878,4 @@ export const Script = (props: any) => {
 
   return null;
 };
+
