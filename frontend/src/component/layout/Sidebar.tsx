@@ -323,12 +323,22 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
       <Script totalPage={totalPage} />
       <div className="mainSidebar">
         <div className="sideBar webSidebar">
-          <div className="sideBarLogo">
+          <div className="sideBarLogo" style={{ padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Link
               href="/dashboard"
-              className="d-flex align-items-center cursor-pointer"
+              className="d-flex align-items-center justify-content-center cursor-pointer w-100"
             >
-              <img src="/images/logo.png" alt="logo" width={35} />
+              <img
+                src="/images/logo.png"
+                alt="logo"
+                style={{
+                  width: "100%",
+                  maxWidth: "180px",
+                  maxHeight: "60px",
+                  objectFit: "contain",
+                  margin: "0 auto",
+                }}
+              />
             </Link>
           </div>
           {/* ======= Navigation ======= */}
@@ -878,4 +888,5 @@ export const Script = (props: any) => {
 
   return null;
 };
+
 

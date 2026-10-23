@@ -114,13 +114,18 @@ export default function Login() {
         <div className=" w-100">
           <div className="align-items-center d-flex h-100 justify-content-center w-100">
             <div className="w-50 w-md-100">
-              <div>
+              <div className="mb-3 text-start">
                 <img
                   src="/images/logo.png"
                   alt="Logo"
                   className="mb-2"
-                  height={75}
-                  width={75}
+                  style={{
+                    width: "100%",
+                    maxWidth: "220px",
+                    height: "auto",
+                    maxHeight: "95px",
+                    objectFit: "contain",
+                  }}
                 />
               </div>
               <h2 className="fw-semibold">Login to your account</h2>
@@ -235,4 +240,5 @@ export default function Login() {
     </>
   );
 }
+
 

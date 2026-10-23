@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, AxiosResponse } from "axios";
-import { baseURL, secretKey, isStandaloneMode } from "./config";
+import { baseURL, secretKey } from "./config";
 import { setToast } from "./toastServices";
 import { createSelector } from "reselect";
 
@@ -28,31 +28,12 @@ const getTokenData = (): string | null => {
   return null;
 };
 
-const standaloneAdapter = async (config: any) => {
-  const method = config.method || "get";
-  const url = config.url || "";
-  const { getStandaloneMockResponse } = await import("./standaloneMock");
-  const mockData = getStandaloneMockResponse(method, url, config.data);
-  return {
-    data: mockData,
-    status: 200,
-    statusText: "OK",
-    headers: {},
-    config,
-  };
-};
-
-if (isStandaloneMode) {
-  axios.defaults.adapter = standaloneAdapter as any;
-}
-
 export const apiInstance: AxiosInstance = axios.create({
   baseURL,
   headers: {
     secretKey,
     "Content-Type": "application/json",
   },
-  ...(isStandaloneMode ? { adapter: standaloneAdapter as any } : {}),
 });
 
 const cancelTokenSource = axios.CancelToken.source();
@@ -60,21 +41,6 @@ const token: string | null = getTokenData();
 
 axios.defaults.headers.common["Authorization"] = token ? `${token}` : "";
 axios.defaults.headers.common["key"] = secretKey;
-
-// Global Axios fallback for direct axios calls in slices (only on network connection failure)
-axios.interceptors.response.use(
-  (response) => response,
-  async (error: any) => {
-    if (!error.response && (error.code === "ERR_NETWORK" || error.message?.includes("Network Error"))) {
-      const url = error.config?.url || "";
-      const method = error.config?.method || "get";
-      const { getStandaloneMockResponse } = await import("./standaloneMock");
-      const mockData = getStandaloneMockResponse(method, url, error.config?.data);
-      return Promise.resolve({ data: mockData, status: 200, statusText: "OK", headers: {}, config: error.config });
-    }
-    return Promise.reject(error);
-  }
-);
 
 apiInstance.interceptors.request.use(
   async (config: AxiosRequestConfig): Promise<any> => {
@@ -96,14 +62,6 @@ apiInstance.interceptors.request.use(
 apiInstance.interceptors.response.use(
   (response: AxiosResponse): any => response.data,
   async (error: AxiosError): Promise<any> => {
-    // Only fallback if backend is completely offline / unreachable
-    if (!error.response && (error.code === "ERR_NETWORK" || error.message?.includes("Network Error"))) {
-      const url = error.config?.url || "";
-      const method = error.config?.method || "get";
-      const { getStandaloneMockResponse } = await import("./standaloneMock");
-      return getStandaloneMockResponse(method, url, error.config?.data);
-    }
-
     const errorData = error.response?.data as ApiResponseError | undefined;
 
     if (error.response?.status === 401) {
@@ -148,57 +106,37 @@ const getHeaders = (): { [key: string]: string } => ({
   "Content-Type": "application/json",
 });
 
-const fetchWithFallback = async (method: string, url: string, body?: any): Promise<any> => {
-  if (isStandaloneMode) {
-    const { getStandaloneMockResponse } = await import("./standaloneMock");
-    return getStandaloneMockResponse(method, url, body);
-  }
-
+const requestFetch = async (method: string, url: string, body?: any): Promise<any> => {
   const { validateSessionIntegrity } = await import("./security");
   await validateSessionIntegrity();
 
-  try {
-    const res = await fetch(`${baseURL}${url}`, {
-      method,
-      headers: getHeaders(),
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
+  const res = await fetch(`${baseURL}${url}`, {
+    method,
+    headers: getHeaders(),
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
 
-    if (res.status === 401) {
-      if (typeof window !== "undefined") {
-        sessionStorage.clear();
-        window.location.href = "/";
-      }
-      return Promise.reject({ status: false, message: "Session expired. Please login again." });
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      sessionStorage.clear();
+      window.location.href = "/";
     }
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({ message: res.statusText }));
-      return Promise.reject(errData);
-    }
-
-    return await res.json();
-  } catch (err: any) {
-    // Only fallback to standalone mock if backend is completely offline (Network Error / Connection Refused)
-    if (
-      err?.name === "TypeError" ||
-      err?.message?.includes("Failed to fetch") ||
-      err?.message?.includes("NetworkError") ||
-      err?.code === "ECONNREFUSED"
-    ) {
-      console.warn(`[Standalone Mode] Backend offline for ${method} ${url}. Serving mock response.`);
-      const { getStandaloneMockResponse } = await import("./standaloneMock");
-      return getStandaloneMockResponse(method, url, body);
-    }
-    throw err;
+    return Promise.reject({ status: false, message: "Session expired. Please login again." });
   }
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ message: res.statusText }));
+    return Promise.reject(errData);
+  }
+
+  return await res.json();
 };
 
 export const apiInstanceFetch = {
   baseURL,
-  get: async (url: string) => fetchWithFallback("GET", url),
-  post: async (url: string, data?: object) => fetchWithFallback("POST", url, data),
-  patch: async (url: string, data?: object) => fetchWithFallback("PATCH", url, data),
-  put: async (url: string, data?: object) => fetchWithFallback("PUT", url, data),
-  delete: async (url: string, data?: object) => fetchWithFallback("DELETE", url, data),
+  get: async (url: string) => requestFetch("GET", url),
+  post: async (url: string, data?: object) => requestFetch("POST", url, data),
+  patch: async (url: string, data?: object) => requestFetch("PATCH", url, data),
+  put: async (url: string, data?: object) => requestFetch("PUT", url, data),
+  delete: async (url: string, data?: object) => requestFetch("DELETE", url, data),
 };
