@@ -42,12 +42,8 @@ export default function Document() {
           integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N"
           crossOrigin="anonymous"
         />
-        <Script src="https://code.jquery.com/jquery-3.6.4.min.js" />
+        <Script src="https://code.jquery.com/jquery-3.6.4.min.js" strategy="beforeInteractive" />
         {/* <Script src="../src/assets/js/custom.js" /> */}
-        <Script
-          src="https://kit.fontawesome.com/e9f488f24b.js"
-          crossOrigin="anonymous"
-        />
         <Script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js" />
         <Script src="https://cdn.jsdelivr.net/npm/@svga/player@3.0.0-beta.1/lib/svga.min.js" />
       </body>

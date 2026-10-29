@@ -100,7 +100,7 @@ export default function Input(props: any) {
         )}
         {type === "search" && !value && (
           <div className="searching">
-            <i className="fa-solid fa-magnifying-glass"></i>
+            <i className="bi bi-search"></i>
           </div>
         )}
       </div>
