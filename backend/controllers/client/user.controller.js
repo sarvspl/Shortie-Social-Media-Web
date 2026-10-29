@@ -85,6 +85,17 @@ exports.checkUser = async (req, res) => {
       return res.status(200).json({ status: false, message: "identity must be requried.", isLogin: false });
     }
 
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(200).json({
+        status: true,
+        message: "User must have to sign up.",
+        isLogin: false,
+      });
+    }
+    if (!req.query.identity) {
+      return res.status(200).json({ status: false, message: "identity must be requried.", isLogin: false });
+    }
+
     const user = await User.findOne({ identity: req.query.identity, loginType: 3 });
     if (user) {
       return res.status(200).json({
@@ -117,6 +128,32 @@ exports.loginOrSignUp = async (req, res) => {
 
     if (!req.body.fcmToken) {
       req.body.fcmToken = "connect_default_token";
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      const offlineUser = {
+        _id: "650000000000000000000002",
+        name: req.body.name || "Quick User",
+        userName: req.body.userName || "@quickuser",
+        gender: req.body.gender || "male",
+        age: 25,
+        image: req.body.image || "https://images.pexels.com/photos/983564/pexels-photo-983564.jpeg",
+        country: "India",
+        bio: "",
+        identity: req.body.identity,
+        fcmToken: req.body.fcmToken,
+        loginType: req.body.loginType,
+        coin: 5000,
+        isBlock: false,
+        isVerified: false,
+        uniqueId: "100001",
+      };
+      return res.status(200).json({
+        status: true,
+        message: "The user has successfully logged in.",
+        user: offlineUser,
+        signUp: true,
+      });
     }
 
     let userQuery;

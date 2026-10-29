@@ -15,6 +15,7 @@ import { IconEdit, IconTrash } from "@tabler/icons-react";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { usePermission } from "@/hooks/usePermission";
+import { baseURL } from "@/util/config";
 import NoImage from '../assets/images/hashtagbanner.png';
 
 interface BannerData {
@@ -197,7 +198,11 @@ const Reaction = () => {
                         </div>
                         {item?.type === 3 ? (
                           <img
-                            src={item?.svgaImage}
+                            src={
+                              item?.svgaImage?.startsWith("http")
+                                ? item.svgaImage
+                                : `${baseURL}${item?.svgaImage?.startsWith("/") ? "" : "/"}${item?.svgaImage}`
+                            }
                             className="img-gift"
                             style={{
                               objectFit: "cover",
@@ -208,9 +213,17 @@ const Reaction = () => {
                             }}
                           />
                         ) : (
-                          <img src={item?.image} className="img-gift" onError={(e) => {
-                            e.currentTarget.src = "/images/user.png";
-                          }} />
+                          <img
+                            src={
+                              item?.image?.startsWith("http")
+                                ? item.image
+                                : `${baseURL}${item?.image?.startsWith("/") ? "" : "/"}${item?.image}`
+                            }
+                            className="img-gift"
+                            onError={(e) => {
+                              e.currentTarget.src = "/images/user.png";
+                            }}
+                          />
                         )}
 
                         {/* <h5 style={{height : "20px" }}>

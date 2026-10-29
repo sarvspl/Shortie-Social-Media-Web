@@ -4,7 +4,7 @@ import Input from "@/extra/Input";
 import { uploadFile } from "@/store/adminSlice";
 import { getBanner } from "@/store/bannerSlice";
 import { closeDialog } from "@/store/dialogSlice";
-import { createReaction, updateReaction } from "@/store/reactionSlice";
+import { createReaction, updateReaction, getReaction } from "@/store/reactionSlice";
 import { RootStore, useAppDispatch } from "@/store/store";
 import { permissionError } from "@/util/Alert";
 import { projectName } from "@/util/config";
@@ -86,8 +86,7 @@ const ReactionDialogue = () => {
 
   let folderStructure: string = `${projectName}/admin/bannerImage`;
 
-  const handleFileUpload = async (image) => {
-    // Get the uploaded file from the event
+  const handleFileUpload = async (image: any) => {
     const file = image;
     const formData = new FormData();
 
@@ -95,26 +94,34 @@ const ReactionDialogue = () => {
     formData.append("keyName", file[0]?.name);
     formData.append("content", file[0]);
 
-    // Create a payload for your dispatch
     const payloadformData: any = {
       data: formData,
     };
 
     if (!canCreate && !canEdit) return null;
     if (formData) {
-      const response: any = await dispatch(
-        uploadFile(payloadformData)
-      ).unwrap();
+      try {
+        const response: any = await dispatch(
+          uploadFile(payloadformData)
+        ).unwrap();
 
-      if (response?.data?.status) {
+        const url =
+          response?.data?.url ||
+          response?.url ||
+          response?.data?.data?.url ||
+          (typeof response === "string" ? response : null);
 
-        if (response.data.url) {
-
-          setImage(response.data.url);
-          setImagePath(response.data.url);
-
-          return response.data.url
+        if (url) {
+          setImage(url);
+          setImagePath(url);
+          return url;
+        } else {
+          setToast("error", response?.data?.message || "Failed to upload image");
+          return null;
         }
+      } catch (err: any) {
+        setToast("error", err?.message || "Error uploading file");
+        return null;
       }
     }
   };
@@ -130,7 +137,6 @@ const ReactionDialogue = () => {
     if (dialogueData && !canEdit) return permissionError();
     if (!dialogueData && !canCreate) return permissionError();
 
-
     if (dialogueData) {
       // Update logic
       let hasChanged = false;
@@ -138,6 +144,7 @@ const ReactionDialogue = () => {
 
       if (image) {
         const url = await handleFileUpload(image);
+        if (!url) return;
         changedFields.image = url;
         hasChanged = true;
       }
@@ -149,12 +156,12 @@ const ReactionDialogue = () => {
       }
 
       let payload: any = {
-        // id: dialogueData?._id,
         reactionId: dialogueData?._id,
         ...changedFields,
       };
 
-      dispatch(updateReaction(payload));
+      await dispatch(updateReaction(payload));
+      dispatch(getReaction());
       dispatch(closeDialog());
     } else {
       // Create logic
@@ -165,12 +172,14 @@ const ReactionDialogue = () => {
       }
 
       const url = await handleFileUpload(image);
+      if (!url) return;
 
       let payload: any = {
         image: url,
       };
 
-      dispatch(createReaction(payload));
+      await dispatch(createReaction(payload));
+      dispatch(getReaction());
       dispatch(closeDialog());
     }
   };

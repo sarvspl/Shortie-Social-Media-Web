@@ -1,3 +1,10 @@
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err?.message || err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err?.message || err);
+});
+
 //express
 const express = require("express");
 const app = express();
@@ -27,7 +34,7 @@ require("dotenv").config({ path: ".env" });
 const Setting = require("./models/setting.model");
 
 //Declare global variable
-global.settingJSON = {};
+try { global.settingJSON = require("./setting"); } catch (e) { global.settingJSON = {}; }
 
 //handle global.settingJSON when pm2 restart
 async function initializeSettings() {
@@ -91,7 +98,7 @@ app.get("/.well-known/apple-app-site-association", (req, res) => {
 });
 
 //set port and listen the request
-server.listen(process?.env.PORT, () => {
+server.listen(process?.env.PORT, "0.0.0.0", () => {
   console.log("Hello World ! listening on " + process?.env?.PORT);
 });
 

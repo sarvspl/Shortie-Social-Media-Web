@@ -114,17 +114,18 @@ export default function Login() {
         <div className=" w-100">
           <div className="align-items-center d-flex h-100 justify-content-center w-100">
             <div className="w-50 w-md-100">
-              <div className="mb-3 text-start">
+              <div className="mb-4 text-start">
                 <img
                   src="/images/logo.png"
                   alt="Logo"
-                  className="mb-2"
+                  className="mb-3"
                   style={{
                     width: "100%",
-                    maxWidth: "220px",
+                    maxWidth: "340px",
                     height: "auto",
-                    maxHeight: "95px",
+                    maxHeight: "120px",
                     objectFit: "contain",
+                    display: "block",
                   }}
                 />
               </div>

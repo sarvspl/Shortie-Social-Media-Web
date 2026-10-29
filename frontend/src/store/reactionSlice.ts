@@ -40,21 +40,21 @@ export const getReaction: any = createAsyncThunk(
 export const createReaction = createAsyncThunk(
   "admin/reaction/addReaction",
   async (payload: AllUsersPayload | undefined) => {
-    return axios.post("admin/reaction/addReaction", payload);
+    return apiInstanceFetch.post("admin/reaction/addReaction", payload);
   }
 );
 
 export const deleteReaction = createAsyncThunk(
   "admin/reaction/removeReaction",
   async (payload: AllUsersPayload | undefined) => {
-    return axios.delete(`admin/reaction/removeReaction?reactionId=${payload}`);
+    return apiInstanceFetch.delete(`admin/reaction/removeReaction?reactionId=${payload}`);
   }
 );
 
 export const activeReaction = createAsyncThunk(
   "admin/reaction/hasActiveReaction",
   async (payload: AllUsersPayload | undefined) => {
-    return axios.patch(`admin/reaction/hasActiveReaction?reactionId=${payload}`);
+    return apiInstanceFetch.patch(`admin/reaction/hasActiveReaction?reactionId=${payload}`);
   }
 );
 
@@ -75,19 +75,23 @@ const reactionSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(getReaction.pending, (state, action: PayloadAction<any>) => {
       state.isSkeleton = true;
-      state.isLoading = true
+      state.isLoading = true;
     });
     builder.addCase(
       getReaction.fulfilled,
       (state, action: PayloadAction<any>) => {
         state.isLoading = false;
-        state.reaction = action.payload.data;
-      state.isLoading = false
-
+        state.isSkeleton = false;
+        state.reaction = Array.isArray(action.payload?.data)
+          ? action.payload.data
+          : Array.isArray(action.payload)
+          ? action.payload
+          : [];
       }
     );
     builder.addCase(getReaction.rejected, (state, action: PayloadAction<any>) => {
       state.isLoading = false;
+      state.isSkeleton = false;
     });
 
     builder.addCase(
@@ -101,10 +105,12 @@ const reactionSlice = createSlice({
       createReaction.fulfilled,
       (state, action: PayloadAction<any>) => {
         state.isLoading = false;
-        if (action.payload.status) {
-          state.reaction.unshift(action?.payload?.data?.data);
-
-          setToast("success", "Reaction Add Successfully");
+        if (action.payload?.status) {
+          const newReaction = action.payload?.data;
+          if (newReaction && newReaction._id) {
+            state.reaction.unshift(newReaction);
+          }
+          setToast("success", "Reaction Added Successfully");
         }
       }
     );
@@ -120,11 +126,11 @@ const reactionSlice = createSlice({
     );
 
     builder.addCase(deleteReaction.fulfilled, (state, action: any) => {
-      if (action?.payload?.data?.status) {
+      if (action?.payload?.status) {
         state.reaction = state.reaction.filter(
           (banner) => banner?._id !== action?.meta?.arg
         );
-        setToast("success", "Reaction Delete Successfully");
+        setToast("success", "Reaction Deleted Successfully");
       }
       state.isLoading = false;
     });
@@ -142,15 +148,15 @@ const reactionSlice = createSlice({
     builder.addCase(
       activeReaction.fulfilled,
       (state, action: PayloadAction<any>) => {
-        if (action?.payload?.data?.status) {
-          const updatedBanner = action.payload.data.data;
+        if (action?.payload?.status) {
+          const updatedBanner = action.payload.data;
           const bannerIndex = state.reaction.findIndex(
             (banner) => banner?._id === updatedBanner?._id
           );
           if (bannerIndex !== -1) {
             state.reaction[bannerIndex].isActive = updatedBanner.isActive;
           }
-          setToast("success", "Reaction Status Update Successfully");
+          setToast("success", "Reaction Status Updated Successfully");
         }
         state.isLoading = false;
       }
@@ -166,15 +172,15 @@ const reactionSlice = createSlice({
 
     builder.addCase(updateReaction.fulfilled, (state, action: any) => {
       state.isLoading = false;
-      
-      if (action.payload.status === true) {
+      if (action.payload?.status === true) {
+        const updatedReaction = action.payload?.data;
         const bannerIndex = state.reaction.findIndex(
-          (banner) => banner?._id === action?.payload?.data?._id
+          (banner) => banner?._id === updatedReaction?._id
         );
         if (bannerIndex !== -1) {
           state.reaction[bannerIndex] = {
             ...state.reaction[bannerIndex],
-            ...action.payload.data,
+            ...updatedReaction,
           };
         }
         setToast("success", `Reaction Updated Successfully`);

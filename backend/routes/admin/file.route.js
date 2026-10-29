@@ -21,6 +21,7 @@ route.post(
     upload(request, response, function (error) {
       if (error) {
         console.log("error in file ", error);
+        return response.status(400).json({ status: false, message: error.message });
       } else {
         console.log("File uploaded successfully.");
         next();
