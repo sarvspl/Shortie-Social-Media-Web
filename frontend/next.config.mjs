@@ -37,8 +37,6 @@ const nextConfig = {
 
   turbopack: {},
   webpack(config) {
-    config.optimization.minimize = false;
-
     // ❗ Memory + disk save
     config.cache = false;
 
