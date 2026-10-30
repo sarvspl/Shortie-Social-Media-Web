@@ -30,11 +30,14 @@ exports.uploadContent = async (req, res) => {
 
     if (activeStorage === "local") {
       const isStory = folderStructure === `${process.env.projectName}/client/storyContent`;
+      const base = (process.env.baseURL && !process.env.baseURL.includes("192.168") && !process.env.baseURL.includes("localhost"))
+        ? (process.env.baseURL.endsWith("/api") ? process.env.baseURL : `${process.env.baseURL}/api`)
+        : "https://connect.sarstage.online/api";
 
       if (isStory) {
-        url = `${process.env.baseURL}/uploads/storyContent/${req.file.originalname}`;
+        url = `${base}/uploads/storyContent/${req.file.originalname}`;
       } else {
-        url = `${process.env.baseURL}/uploads/${req.file.originalname}`;
+        url = `${base}/uploads/${req.file.originalname}`;
       }
     } else if (activeStorage === "digitalocean") {
       url = `${settingJSON.doEndpoint}/${folderStructure}/${req.file.originalname}`;
