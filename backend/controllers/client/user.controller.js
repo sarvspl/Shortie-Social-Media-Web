@@ -166,7 +166,17 @@ exports.loginOrSignUp = async (req, res) => {
         return res.status(200).json({ status: false, message: "mobileNumber must be required." });
       }
 
-      userQuery = await User.findOne({ mobileNumber: req.body.mobileNumber?.trim() });
+      const inputNum = req.body.mobileNumber.toString().trim();
+      const numDigits = inputNum.replace(/[^0-9]/g, "");
+      const tenDigits = numDigits.length >= 10 ? numDigits.slice(-10) : numDigits;
+      userQuery = await User.findOne({
+        $or: [
+          { mobileNumber: inputNum },
+          { mobileNumber: `+${numDigits}` },
+          { mobileNumber: numDigits },
+          { mobileNumber: { $regex: `${tenDigits}$` } },
+        ],
+      });
     } else if (loginType === 2) {
       if (!req.body.email) {
         return res.status(200).json({ status: false, message: "email must be required." });
@@ -198,11 +208,12 @@ exports.loginOrSignUp = async (req, res) => {
         return res.status(200).json({ status: false, message: "You are blocked by the admin." });
       }
 
-      user.image = req.body.image ? req.body.image.trim() : user.image;
-      user.name = req.body.name ? req.body.name.trim() : user.name;
-      user.userName = req.body.userName ? req.body.userName.trim() : user.userName;
+      if (!user.name && req.body.name) user.name = req.body.name.trim();
+      if (!user.userName && req.body.userName) user.userName = req.body.userName.trim();
+      if (!user.image && req.body.image) user.image = req.body.image.trim();
       user.fcmToken = req.body.fcmToken ? req.body.fcmToken.trim() : user.fcmToken;
       user.lastlogin = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      await user.save();
 
       if (loginType === 3) {
         const user_ = await userFunction(user, req);
