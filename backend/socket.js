@@ -58,164 +58,125 @@ io.on("connection", async (socket) => {
 
   //chat
   socket.on("message", async (data) => {
-    console.log("data in message =====================================  ", data);
+    try {
+      console.log("data in message =====================================  ", data);
 
-    const parseData = JSON.parse(data);
-    console.log("parseData", parseData);
+      const parseData = typeof data === "string" ? JSON.parse(data) : data;
+      console.log("parseData", parseData);
 
-    const [follow, chatTopic] = await Promise.all([
-      FollowerFollowing.findOne({ fromUserId: parseData?.senderUserId, toUserId: parseData?.receiverUserId }),
-      ChatTopic.findById(parseData?.chatTopicId).populate("senderUserId", "_id name userName image fcmToken isBlock").populate("receiverUserId", "_id name userName image fcmToken isBlock"),
-    ]);
+      if (!parseData?.senderUserId || !parseData?.receiverUserId) {
+        console.error("Missing senderUserId or receiverUserId in message");
+        return;
+      }
 
-    if (!follow && !chatTopic.isAccepted) {
-      console.log("Users do not follow each other in message.");
+      const senderIdStr = parseData.senderUserId.toString();
+      const receiverIdStr = parseData.receiverUserId.toString();
 
-      let chatRequestTopic;
-      const foundChatTopic = await ChatRequestTopic.findOne({
-        $or: [
-          { $and: [{ senderUserId: parseData?.senderUserId }, { receiverUserId: parseData?.receiverUserId }] },
-          { $and: [{ senderUserId: parseData?.receiverUserId }, { receiverUserId: parseData?.senderUserId }] },
-        ],
+      let chatTopic = null;
+      if (parseData?.chatTopicId && mongoose.Types.ObjectId.isValid(parseData.chatTopicId)) {
+        chatTopic = await ChatTopic.findById(parseData.chatTopicId)
+          .populate("senderUserId", "_id name userName image fcmToken isBlock")
+          .populate("receiverUserId", "_id name userName image fcmToken isBlock");
+      }
+
+      if (!chatTopic) {
+        chatTopic = await ChatTopic.findOne({
+          $or: [
+            { senderUserId: parseData.senderUserId, receiverUserId: parseData.receiverUserId },
+            { senderUserId: parseData.receiverUserId, receiverUserId: parseData.senderUserId },
+          ],
+        })
+          .populate("senderUserId", "_id name userName image fcmToken isBlock")
+          .populate("receiverUserId", "_id name userName image fcmToken isBlock");
+      }
+
+      if (!chatTopic) {
+        chatTopic = new ChatTopic({
+          senderUserId: parseData.senderUserId,
+          receiverUserId: parseData.receiverUserId,
+          isAccepted: true,
+        });
+        await chatTopic.save();
+        chatTopic = await ChatTopic.findById(chatTopic._id)
+          .populate("senderUserId", "_id name userName image fcmToken isBlock")
+          .populate("receiverUserId", "_id name userName image fcmToken isBlock");
+      }
+
+      const chat = new Chat({
+        senderUserId: parseData.senderUserId,
+        messageType: parseData.messageType || 1,
+        message: parseData.message || "",
+        image: parseData.image || "",
+        audio: parseData.audio || "",
+        chatTopicId: chatTopic._id,
+        date: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
       });
 
-      chatRequestTopic = foundChatTopic;
+      chatTopic.chatId = chat._id;
+      chatTopic.isAccepted = true;
 
-      if (!chatRequestTopic) {
-        chatRequestTopic = new ChatRequestTopic();
+      await Promise.all([chat.save(), chatTopic.save()]);
 
-        chatRequestTopic.senderUserId = parseData?.senderUserId;
-        chatRequestTopic.receiverUserId = parseData?.receiverUserId;
+      const serializedData = typeof data === "string" ? data : JSON.stringify(data);
+
+      // Emit to both sender and receiver rooms for immediate real-time update
+      io.in("globalRoom:" + senderIdStr).emit("message", { data: serializedData, messageId: chat._id });
+      io.in("globalRoom:" + receiverIdStr).emit("message", { data: serializedData, messageId: chat._id });
+
+      // Backwards compatibility for request screen listeners
+      io.in("globalRoom:" + senderIdStr).emit("messageRequest", { data: serializedData, messageId: chat._id });
+      io.in("globalRoom:" + receiverIdStr).emit("messageRequest", { data: serializedData, messageId: chat._id });
+
+      // FCM push notification
+      let receiverUser = null;
+      let senderUser = null;
+      if (chatTopic.senderUserId && chatTopic.senderUserId._id.toString() === senderIdStr) {
+        senderUser = chatTopic.senderUserId;
+        receiverUser = chatTopic.receiverUserId;
+      } else if (chatTopic.receiverUserId) {
+        senderUser = chatTopic.receiverUserId;
+        receiverUser = chatTopic.senderUserId;
       }
 
-      if (parseData?.messageType == 1) {
-        const messageRequest = new ChatRequest();
+      if (receiverUser && !receiverUser.isBlock && receiverUser.fcmToken) {
+        const adminPromise = await admin;
+        const payload = {
+          token: receiverUser.fcmToken,
+          notification: {
+            title: `${senderUser ? senderUser.name : 'New Message'} sent you a message 📩`,
+            body: chat.message ? `🗨️ ${chat.message}` : (chat.messageType === 2 ? 'Sent an image' : 'Sent an audio message'),
+            image: senderUser?.image || undefined,
+          },
+          data: {
+            type: "CHAT",
+          },
+        };
 
-        messageRequest.senderUserId = parseData?.senderUserId;
-        messageRequest.messageType = 1;
-        messageRequest.message = parseData?.message;
-        messageRequest.image = "";
-        messageRequest.chatRequestTopicId = chatRequestTopic._id;
-        messageRequest.date = new Date().toLocaleString();
-
-        chatRequestTopic.chatRequestId = messageRequest._id;
-
-        const chat = new Chat();
-        chat.senderUserId = messageRequest.senderUserId;
-        chat.messageType = messageRequest.messageType;
-        chat.message = messageRequest.message;
-        chat.image = messageRequest.image;
-        chat.chatTopicId = chatTopic?._id;
-        chat.date = new Date().toLocaleString();
-
-        chatTopic.chatId = chat?._id;
-
-        await Promise.all([chatRequestTopic.save(), messageRequest.save(), chatTopic.save(), chat.save()]);
-
-        io.in("globalRoom:" + chatTopic?.senderUserId?._id.toString()).emit("messageRequest", { data: data, messageId: messageRequest._id });
-        io.in("globalRoom:" + chatTopic?.receiverUserId?._id.toString()).emit("messageRequest", { data: data, messageId: messageRequest._id });
-
-        let receiverUser, senderUser;
-        if (chatTopic.senderUserId._id.toString() === parseData.senderUserId.toString()) {
-          senderUser = chatTopic.senderUserId;
-          receiverUser = chatTopic.receiverUserId;
-        } else if (chatTopic.receiverUserId._id) {
-          senderUser = chatTopic.receiverUserId;
-          receiverUser = chatTopic.senderUserId;
-        }
-
-        if (!receiverUser.isBlock && receiverUser.fcmToken !== null) {
-          const adminPromise = await admin;
-
-          const payload = {
-            token: receiverUser.fcmToken,
-            notification: {
-              title: `New Message Request from ${senderUser.name}`,
-              body: `${senderUser.name} sent a message request.`,
-              image: senderUser.image,
-            },
-            data: {
-              type: "CHAT_REQUEST",
-            },
-          };
-
-          adminPromise
-            .messaging()
-            .send(payload)
-            .then((response) => {
-              console.log("Successfully sent notification with response: ", response);
-            })
-            .catch((error) => {
-              console.log("Error sending notification: ", error);
-            });
-        }
-      } else {
-        console.log("other messageType in messageRequest");
-
-        io.in("globalRoom:" + chatTopic?.senderUserId?._id.toString()).emit("messageRequest", { data: data });
-        io.in("globalRoom:" + chatTopic?.receiverUserId?._id.toString()).emit("messageRequest", { data: data });
+        adminPromise
+          .messaging()
+          .send(payload)
+          .then((response) => {
+            console.log("Successfully sent notification with response: ", response);
+          })
+          .catch((error) => {
+            console.log("Error sending notification: ", error);
+          });
       }
-    } else {
-      console.log("Users follow each other in message.");
+    } catch (err) {
+      console.error("Error in message socket event handler:", err);
+    }
+  });
 
-      if (chatTopic && parseData?.messageType == 1) {
-        const chat = new Chat();
-
-        chat.senderUserId = parseData?.senderUserId;
-        chat.messageType = 1;
-        chat.message = parseData?.message;
-        chat.image = "";
-        chat.chatTopicId = chatTopic._id;
-        chat.date = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-
-        chatTopic.chatId = chat._id;
-        chatTopic.isAccepted = true;
-
-        await Promise.all([chat.save(), chatTopic.save()]);
-
-        io.in("globalRoom:" + chatTopic?.senderUserId?._id.toString()).emit("message", { data: data, messageId: chat._id });
-        io.in("globalRoom:" + chatTopic?.receiverUserId?._id.toString()).emit("message", { data: data, messageId: chat._id });
-
-        let receiverUser, senderUser;
-        if (chatTopic.senderUserId._id.toString() === parseData.senderUserId.toString()) {
-          senderUser = chatTopic.senderUserId;
-          receiverUser = chatTopic.receiverUserId;
-        } else if (chatTopic.receiverUserId._id) {
-          senderUser = chatTopic.receiverUserId;
-          receiverUser = chatTopic.senderUserId;
-        }
-
-        if (!receiverUser.isBlock && receiverUser.fcmToken !== null) {
-          const adminPromise = await admin;
-
-          const payload = {
-            token: receiverUser.fcmToken,
-            notification: {
-              title: `${senderUser.name} sent you a message 📩`,
-              body: `🗨️ ${chat.message}`,
-              image: senderUser?.image,
-            },
-            data: {
-              type: "CHAT",
-            },
-          };
-
-          adminPromise
-            .messaging()
-            .send(payload)
-            .then((response) => {
-              console.log("Successfully sent with response: ", response);
-            })
-            .catch((error) => {
-              console.log("Error sending message:      ", error);
-            });
-        }
-      } else {
-        console.log("other messageType");
-
-        io.in("globalRoom:" + chatTopic?.senderUserId?._id.toString()).emit("message", { data: data });
-        io.in("globalRoom:" + chatTopic?.receiverUserId?._id.toString()).emit("message", { data: data });
+  //typing indicator
+  socket.on("typing", (data) => {
+    try {
+      const parseData = typeof data === "string" ? JSON.parse(data) : data;
+      console.log("typing event data:", parseData);
+      if (parseData?.receiverUserId) {
+        io.in("globalRoom:" + parseData.receiverUserId.toString()).emit("typing", parseData);
       }
+    } catch (err) {
+      console.error("Error in typing event handler:", err);
     }
   });
 
