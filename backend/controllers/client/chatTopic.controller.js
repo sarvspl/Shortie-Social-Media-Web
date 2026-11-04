@@ -42,14 +42,7 @@ exports.getChatList = async (req, res) => {
           {
             $match: {
               chatId: { $ne: null },
-              $or: [
-                {
-                  $and: [{ senderUserId: userId }, { $or: [{ isAccepted: true }, { isAccepted: false }] }],
-                },
-                {
-                  $and: [{ receiverUserId: userId }, { isAccepted: true }],
-                },
-              ],
+              $or: [{ senderUserId: userId }, { receiverUserId: userId }],
             },
           },
           {
@@ -397,14 +390,7 @@ exports.getChatList = async (req, res) => {
           {
             $match: {
               chatId: { $ne: null },
-              $or: [
-                {
-                  $and: [{ senderUserId: userId }, { $or: [{ isAccepted: true }, { isAccepted: false }] }],
-                },
-                {
-                  $and: [{ receiverUserId: userId }, { isAccepted: true }],
-                },
-              ],
+              $or: [{ senderUserId: userId }, { receiverUserId: userId }],
             },
           },
           {

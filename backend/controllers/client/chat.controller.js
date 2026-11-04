@@ -91,13 +91,18 @@ exports.createChat = async (req, res) => {
 
       messageRequest.senderUserId = senderUser._id;
 
-      if (messageType == 2) {
+      if (messageType == 1) {
+        messageRequest.messageType = 1;
+        messageRequest.message = req?.body?.message || "";
+        messageRequest.image = "";
+        messageRequest.audio = "";
+      } else if (messageType == 2) {
         messageRequest.messageType = 2;
-        messageRequest.message = "📸 Image";
+        messageRequest.message = req?.body?.message || "📸 Image";
         messageRequest.image = req?.body?.image ? req?.body?.image : "";
       } else if (messageType == 3) {
         messageRequest.messageType = 3;
-        messageRequest.message = "🎤 Audio";
+        messageRequest.message = req?.body?.message || "🎤 Audio";
         messageRequest.audio = req?.body?.audio ? req?.body?.audio : "";
       } else {
         if (req?.body?.image) {
@@ -282,13 +287,18 @@ exports.createChat = async (req, res) => {
 
       chat.senderUserId = senderUser._id;
 
-      if (messageType == 2) {
+      if (messageType == 1) {
+        chat.messageType = 1;
+        chat.message = req?.body?.message || "";
+        chat.image = "";
+        chat.audio = "";
+      } else if (messageType == 2) {
         chat.messageType = 2;
-        chat.message = "📸 Image";
+        chat.message = req?.body?.message || "📸 Image";
         chat.image = req?.body?.image ? req?.body?.image : "";
       } else if (messageType == 3) {
         chat.messageType = 3;
-        chat.message = "🎤 Audio";
+        chat.message = req?.body?.message || "🎤 Audio";
         chat.audio = req?.body?.audio ? req?.body?.audio : "";
       } else {
         if (req?.body?.image) {
@@ -489,6 +499,7 @@ exports.getOldChat = async (req, res) => {
 
       chatTopic.senderUserId = senderUser._id;
       chatTopic.receiverUserId = receiverUser._id;
+      chatTopic.isAccepted = true;
     }
 
     await Promise.all([chatTopic.save(), Chat.updateMany({ $and: [{ chatTopicId: chatTopic._id }, { isRead: false }] }, { $set: { isRead: true } }, { new: true })]);
