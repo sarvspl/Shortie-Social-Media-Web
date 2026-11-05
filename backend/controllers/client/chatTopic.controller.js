@@ -41,7 +41,6 @@ exports.getChatList = async (req, res) => {
           // },
           {
             $match: {
-              chatId: { $ne: null },
               $or: [{ senderUserId: userId }, { receiverUserId: userId }],
             },
           },
@@ -106,7 +105,7 @@ exports.getChatList = async (req, res) => {
           {
             $unwind: {
               path: "$chats",
-              preserveNullAndEmptyArrays: true,
+            preserveNullAndEmptyArrays: false,
             },
           },
           {
@@ -192,7 +191,7 @@ exports.getChatList = async (req, res) => {
               time: {
                 $let: {
                   vars: {
-                    timeDiff: { $subtract: [now.toDate(), "$lastChatMessageTime"] },
+                    timeDiff: { $subtract: [now.toDate(), { $ifNull: ["$chats.createdAt", "$updatedAt"] }] },
                   },
                   in: {
                     $concat: [
@@ -237,7 +236,7 @@ exports.getChatList = async (req, res) => {
               },
             },
           },
-          { $sort: { "chat.createdAt": -1 } },
+          { $sort: { "chats.createdAt": -1, updatedAt: -1 } },
           { $skip: (start - 1) * limit },
           { $limit: limit },
         ]),
@@ -389,7 +388,6 @@ exports.getChatList = async (req, res) => {
           // },
           {
             $match: {
-              chatId: { $ne: null },
               $or: [{ senderUserId: userId }, { receiverUserId: userId }],
             },
           },
@@ -454,7 +452,7 @@ exports.getChatList = async (req, res) => {
           {
             $unwind: {
               path: "$chats",
-              preserveNullAndEmptyArrays: true,
+            preserveNullAndEmptyArrays: false,
             },
           },
           {
@@ -541,7 +539,7 @@ exports.getChatList = async (req, res) => {
               time: {
                 $let: {
                   vars: {
-                    timeDiff: { $subtract: [now.toDate(), "$lastChatMessageTime"] },
+                    timeDiff: { $subtract: [now.toDate(), { $ifNull: ["$chats.createdAt", "$updatedAt"] }] },
                   },
                   in: {
                     $concat: [
@@ -586,7 +584,7 @@ exports.getChatList = async (req, res) => {
               },
             },
           },
-          { $sort: { "chat.createdAt": -1 } },
+          { $sort: { "chats.createdAt": -1, updatedAt: -1 } },
           { $skip: (start - 1) * limit },
           { $limit: limit },
         ]),

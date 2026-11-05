@@ -128,7 +128,7 @@ exports.createChat = async (req, res) => {
 
         chatTopic.senderUserId = senderUser._id;
         chatTopic.receiverUserId = receiverUser._id;
-        isAccepted = false;
+        chatTopic.isAccepted = true;
       }
 
       const chat = new Chat();
@@ -143,11 +143,30 @@ exports.createChat = async (req, res) => {
       chatTopic.chatId = chat._id;
 
       await Promise.all([chatRequestTopic.save(), messageRequest.save(), chatTopic.save(), chat.save()]);
+      if (global.io) {
+        const socketPayload = {
+          chatTopicId: chatTopic._id.toString(),
+          senderUserId: senderUser._id.toString(),
+          receiverUserId: receiverUser._id.toString(),
+          messageType: chat.messageType,
+          message: chat.message,
+          image: chat.image,
+          audio: chat.audio,
+          date: chat.date,
+          createdAt: chat.createdAt,
+          messageId: chat._id.toString(),
+        };
+        global.io.in("globalRoom:" + senderUser._id.toString()).emit("message", { data: JSON.stringify(socketPayload), messageId: chat._id });
+        global.io.in("globalRoom:" + receiverUser._id.toString()).emit("message", { data: JSON.stringify(socketPayload), messageId: chat._id });
+        global.io.in("globalRoom:" + senderUser._id.toString()).emit("messageRequest", { data: JSON.stringify(socketPayload), messageId: chat._id });
+        global.io.in("globalRoom:" + receiverUser._id.toString()).emit("messageRequest", { data: JSON.stringify(socketPayload), messageId: chat._id });
+      }
+
 
       res.status(200).json({
         status: true,
         message: "Message request created successfully.",
-        chat: messageRequest,
+        chat: chat,
       });
 
       if (!receiverUser.isBlock && receiverUser.fcmToken !== null) {
@@ -319,6 +338,25 @@ exports.createChat = async (req, res) => {
       chatTopic.isAccepted = true;
 
       await Promise.all([chat.save(), chatTopic.save()]);
+      if (global.io) {
+        const socketPayload = {
+          chatTopicId: chatTopic._id.toString(),
+          senderUserId: senderUser._id.toString(),
+          receiverUserId: receiverUser._id.toString(),
+          messageType: chat.messageType,
+          message: chat.message,
+          image: chat.image,
+          audio: chat.audio,
+          date: chat.date,
+          createdAt: chat.createdAt,
+          messageId: chat._id.toString(),
+        };
+        global.io.in("globalRoom:" + senderUser._id.toString()).emit("message", { data: JSON.stringify(socketPayload), messageId: chat._id });
+        global.io.in("globalRoom:" + receiverUser._id.toString()).emit("message", { data: JSON.stringify(socketPayload), messageId: chat._id });
+        global.io.in("globalRoom:" + senderUser._id.toString()).emit("messageRequest", { data: JSON.stringify(socketPayload), messageId: chat._id });
+        global.io.in("globalRoom:" + receiverUser._id.toString()).emit("messageRequest", { data: JSON.stringify(socketPayload), messageId: chat._id });
+      }
+
 
       res.status(200).json({
         status: true,
