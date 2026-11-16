@@ -113,9 +113,18 @@ io.on("connection", async (socket) => {
       });
 
       chatTopic.chatId = chat._id;
+      chatTopic.lastChatMessageTime = new Date();
       chatTopic.isAccepted = true;
 
-      await Promise.all([chat.save(), chatTopic.save()]);
+      const msgTime = new Date();
+      await Promise.all([
+        chat.save(),
+        ChatTopic.findByIdAndUpdate(
+          chatTopic._id,
+          { $set: { chatId: chat._id, lastChatMessageTime: msgTime, isAccepted: true } },
+          { new: true }
+        ),
+      ]);
 
       const serializedData = typeof data === "string" ? data : JSON.stringify(data);
 
@@ -149,6 +158,16 @@ io.on("connection", async (socket) => {
           },
           data: {
             type: "CHAT",
+            chatTopicId: chatTopic._id ? chatTopic._id.toString() : "",
+            senderUserId: senderIdStr,
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "chat_notifications",
+              sound: "default",
+              clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
           },
         };
 

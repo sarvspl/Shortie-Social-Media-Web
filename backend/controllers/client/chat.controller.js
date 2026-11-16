@@ -1,4 +1,4 @@
-const Chat = require("../../models/chat.model");
+﻿const Chat = require("../../models/chat.model");
 
 //import models
 const ChatTopic = require("../../models/chatTopic.model");
@@ -98,11 +98,11 @@ exports.createChat = async (req, res) => {
         messageRequest.audio = "";
       } else if (messageType == 2) {
         messageRequest.messageType = 2;
-        messageRequest.message = req?.body?.message || "📸 Image";
+        messageRequest.message = req?.body?.message || "ðŸ“¸ Image";
         messageRequest.image = req?.body?.image ? req?.body?.image : "";
       } else if (messageType == 3) {
         messageRequest.messageType = 3;
-        messageRequest.message = req?.body?.message || "🎤 Audio";
+        messageRequest.message = req?.body?.message || "ðŸŽ¤ Audio";
         messageRequest.audio = req?.body?.audio ? req?.body?.audio : "";
       } else {
         if (req?.body?.image) {
@@ -140,9 +140,13 @@ exports.createChat = async (req, res) => {
       chat.chatTopicId = chatTopic._id;
       chat.date = new Date().toLocaleString();
 
-      chatTopic.chatId = chat._id;
-
-      await Promise.all([chatRequestTopic.save(), messageRequest.save(), chatTopic.save(), chat.save()]);
+      const msgTime1 = new Date();
+      await Promise.all([
+        chatRequestTopic.save(),
+        messageRequest.save(),
+        ChatTopic.findByIdAndUpdate(chatTopic._id, { $set: { chatId: chat._id, lastChatMessageTime: msgTime1 } }, { new: true }),
+        chat.save(),
+      ]);
       if (global.io) {
         const socketPayload = {
           chatTopicId: chatTopic._id.toString(),
@@ -181,6 +185,16 @@ exports.createChat = async (req, res) => {
           },
           data: {
             type: "CHAT_REQUEST",
+            chatTopicId: chatTopic._id ? chatTopic._id.toString() : "",
+            senderUserId: senderUser._id ? senderUser._id.toString() : "",
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "chat_notifications",
+              sound: "default",
+              clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
           },
         };
 
@@ -264,8 +278,8 @@ exports.createChat = async (req, res) => {
               const payload = {
                 token: senderUser?.fcmToken,
                 notification: {
-                  title: "🚫 Chat Image Policy Violation 🚫",
-                  body: "Your chat image doesn't meet our community guidelines. Please replace it with an appropriate one to continue uninterrupted. Thank you! 🌟",
+                  title: "ðŸš« Chat Image Policy Violation ðŸš«",
+                  body: "Your chat image doesn't meet our community guidelines. Please replace it with an appropriate one to continue uninterrupted. Thank you! ðŸŒŸ",
                 },
                 data: {
                   type: "CHAT_IMAGE_BANNED",
@@ -313,11 +327,11 @@ exports.createChat = async (req, res) => {
         chat.audio = "";
       } else if (messageType == 2) {
         chat.messageType = 2;
-        chat.message = req?.body?.message || "📸 Image";
+        chat.message = req?.body?.message || "ðŸ“¸ Image";
         chat.image = req?.body?.image ? req?.body?.image : "";
       } else if (messageType == 3) {
         chat.messageType = 3;
-        chat.message = req?.body?.message || "🎤 Audio";
+        chat.message = req?.body?.message || "ðŸŽ¤ Audio";
         chat.audio = req?.body?.audio ? req?.body?.audio : "";
       } else {
         if (req?.body?.image) {
@@ -334,10 +348,12 @@ exports.createChat = async (req, res) => {
       chat.chatTopicId = chatTopic._id;
       chat.date = new Date().toLocaleString();
 
-      chatTopic.chatId = chat._id;
+      const msgTime2 = new Date();
       chatTopic.isAccepted = true;
-
-      await Promise.all([chat.save(), chatTopic.save()]);
+      await Promise.all([
+        chat.save(),
+        ChatTopic.findByIdAndUpdate(chatTopic._id, { $set: { chatId: chat._id, lastChatMessageTime: msgTime2, isAccepted: true } }, { new: true }),
+      ]);
       if (global.io) {
         const socketPayload = {
           chatTopicId: chatTopic._id.toString(),
@@ -370,12 +386,22 @@ exports.createChat = async (req, res) => {
         const payload = {
           token: receiverUser.fcmToken,
           notification: {
-            title: `${senderUser.name} sent you a message 📩`,
-            body: `🗨️ ${chat.message}`,
+            title: `${senderUser.name} sent you a message ðŸ“©`,
+            body: `ðŸ—¨ï¸ ${chat.message}`,
             image: senderUser?.image,
           },
           data: {
             type: "CHAT",
+            chatTopicId: chatTopic._id ? chatTopic._id.toString() : "",
+            senderUserId: senderUser._id ? senderUser._id.toString() : "",
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "chat_notifications",
+              sound: "default",
+              clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
           },
         };
 
@@ -459,8 +485,8 @@ exports.createChat = async (req, res) => {
               const payload = {
                 token: senderUser?.fcmToken,
                 notification: {
-                  title: "🚫 Chat Image Policy Violation 🚫",
-                  body: "Your chat image doesn't meet our community guidelines. Please replace it with an appropriate one to continue uninterrupted. Thank you! 🌟",
+                  title: "ðŸš« Chat Image Policy Violation ðŸš«",
+                  body: "Your chat image doesn't meet our community guidelines. Please replace it with an appropriate one to continue uninterrupted. Thank you! ðŸŒŸ",
                 },
                 data: {
                   type: "CHAT_IMAGE_BANNED",
@@ -565,3 +591,4 @@ exports.getOldChat = async (req, res) => {
     return res.status(500).json({ status: false, error: error.message || "Internal Server Error" });
   }
 };
+
