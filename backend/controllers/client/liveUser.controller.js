@@ -4,6 +4,8 @@ const LiveUser = require("../../models/liveUser.model");
 const User = require("../../models/user.model");
 const LiveHistory = require("../../models/liveHistory.model");
 const Livevideo = require("../../models/livevideo.model");
+const FollowerFollowing = require("../../models/followerFollowing.model");
+const Notification = require("../../models/notification.model");
 
 //private key
 const admin = require("../../util/privateKey");
@@ -13,6 +15,9 @@ const moment = require("moment-timezone");
 
 //mongoose
 const mongoose = require("mongoose");
+
+//agora token
+const { getAgoraCredentials, generateRtcToken, RtcRole } = require("../../util/agoraToken");
 
 const liveUserFunction = async (liveUser, data) => {
   liveUser.name = data.name;
@@ -63,6 +68,22 @@ exports.liveUser = async (req, res) => {
     let liveUserData;
     const liveUser = new LiveUser();
     liveUser.liveHistoryId = liveHistory._id;
+
+    try {
+      const { appId } = getAgoraCredentials();
+      const agoraChannel = liveHistory._id.toString();
+      const rtcToken = generateRtcToken({
+        channelName: agoraChannel,
+        uid: 0,
+        userAccount: existUser._id.toString(),
+        role: RtcRole.PUBLISHER,
+      });
+      liveUser.agoraToken = rtcToken;
+      liveUser.agoraAppId = appId;
+    } catch (agoraErr) {
+      console.warn("Agora token generation failed in liveUser:", agoraErr.message);
+    }
+
     liveUserData = await liveUserFunction(liveUser, existUser);
 
     await Promise.all([liveHistory?.save(), existUser?.save()]);
@@ -73,47 +94,89 @@ exports.liveUser = async (req, res) => {
       data: liveUser,
     });
 
-    //notification related
-    const user = await User.find({
-      isBlock: false,
-      isLive: false,
+    // 1. Find all followers of the host
+    const followerIds = await FollowerFollowing.find({ toUserId: existUser._id }).distinct("fromUserId");
+
+    // 2. Create in-app notifications for followers
+    if (followerIds.length > 0) {
+      const nowStr = moment().tz("Asia/Kolkata").format("DD/MM/YYYY, hh:mm:ss A");
+      const inAppNotifications = followerIds.map((fId) => ({
+        userId: fId,
+        otherUserId: existUser._id,
+        title: `${existUser?.name || "Someone"} is live now! 🚀✨`,
+        message: "📺 Tap to join the live stream and catch the action! 👉🎥👀",
+        image: existUser?.image || "",
+        date: nowStr,
+      }));
+      Notification.insertMany(inAppNotifications).catch((err) => console.warn("Failed creating follower in-app notifications:", err.message));
+    }
+
+    // 3. Find target users for push notification: prioritize followers
+    let targetUserQuery = {
       _id: { $ne: existUser._id },
-    }).distinct("fcmToken");
+      isBlock: false,
+    };
+    if (followerIds.length > 0) {
+      // Send to all followers
+      targetUserQuery._id = { $in: followerIds, $ne: existUser._id };
+    } else {
+      // If 0 followers, notify active non-live users (up to 100)
+      targetUserQuery.isLive = false;
+    }
 
-    if (user.length !== 0) {
-      const payload = {
-        tokens: user,
-        notification: {
-          title: `${existUser?.name} is live now! 🚀✨`,
-          body: "📺 Tap to join the live stream and catch the action! 👉🎥👀",
-          image: existUser?.image,
-        },
-        data: {
-          type: "LIVE",
-        },
-      };
+    const targetUsers = await User.find(targetUserQuery).select("fcmToken _id").limit(500).lean();
 
+    const rawTokens = targetUsers.map((u) => u.fcmToken).filter(Boolean);
+    const hostFcmToken = (existUser.fcmToken || "").trim();
+
+    const tokens = [...new Set(rawTokens.filter(
+      (t) => typeof t === "string" && t.trim().length > 20 && !t.startsWith("dummy") && !t.startsWith("connect_default") && !t.startsWith("token_") && t.trim() !== hostFcmToken
+    ))];
+
+    if (tokens.length !== 0) {
       try {
         const adminPromise = await admin;
-        adminPromise
-          .messaging()
-          .sendEachForMulticast(payload)
-          .then((response) => {
-            console.log("Successfully sent with response: ", response);
+        // Batch in chunks of 500 (Firebase multicast limit)
+        for (let i = 0; i < tokens.length; i += 500) {
+          const batch = tokens.slice(i, i + 500);
+          const payload = {
+            tokens: batch,
+            notification: {
+              title: `${existUser?.name || "Someone"} is live now! 🚀✨`,
+              body: "📺 Tap to join the live stream and catch the action! 👉🎥👀",
+              image: existUser?.image || undefined,
+            },
+            data: {
+              type: "LIVE",
+              userId: existUser._id ? existUser._id.toString() : "",
+              liveHistoryId: liveHistory._id ? liveHistory._id.toString() : "",
+              liveUserObjId: liveUser._id ? liveUser._id.toString() : "",
+              name: existUser?.name || "",
+              image: existUser?.image || "",
+            },
+            android: {
+              priority: "high",
+              notification: {
+                channelId: "general_notifications",
+                priority: "high",
+                defaultSound: true,
+                defaultVibrateTimings: true,
+              },
+            },
+          };
 
-            if (response.failureCount > 0) {
-              response.responses.forEach((res, index) => {
-                if (!res.success) {
-                  console.error(`Error for token ${user[index]}:`, res.error?.message);
-                }
-              });
-            }
-          })
-          .catch((error) => {
-            console.log("Error sending message:      ", error);
-          });
+          adminPromise
+            .messaging()
+            .sendEachForMulticast(payload)
+            .then((response) => {
+              console.log(`Live notifications sent: ${response.successCount} success, ${response.failureCount} failed`);
+            })
+            .catch((error) => {
+              console.error("Error sending live multicast notification:", error);
+            });
+        }
       } catch (notifyErr) {
-        console.warn("Live notification error:", notifyErr.message);
+        console.warn("Live notification setup error:", notifyErr.message);
       }
     }
   } catch (error) {
