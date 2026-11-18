@@ -104,6 +104,14 @@ exports.sendGiftByUser = async (req, res) => {
         data: {
           type: "GIFT",
         },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "general_notifications",
+            sound: "default",
+            clickAction: "FLUTTER_NOTIFICATION_CLICK",
+          },
+        },
       };
 
       adminPromise
@@ -165,8 +173,19 @@ exports.sendGiftTolive = async (req, res) => {
 
     res.status(200).json({ status: true, message: "Gift successfully sent to the user." });
 
-    const [updatedSenderUser, saveHistory] = await Promise.all([
+    const [updatedSenderUser, updatedReceiverUser, saveHistory] = await Promise.all([
       User.updateOne({ _id: senderUser._id }, { $inc: { coin: -coin } }, { new: true }),
+      User.updateOne(
+        { _id: receiverUser._id },
+        {
+          $inc: {
+            coin: coin,
+            receivedCoin: coin,
+            receivedGift: 1,
+          },
+        },
+        { new: true }
+      ),
       History.create({
         userId: senderUser._id,
         otherUserId: receiverUser._id,

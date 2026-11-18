@@ -187,6 +187,8 @@ exports.createChat = async (req, res) => {
             type: "CHAT_REQUEST",
             chatTopicId: chatTopic._id ? chatTopic._id.toString() : "",
             senderUserId: senderUser._id ? senderUser._id.toString() : "",
+            senderName: senderUser?.name || "",
+            message: chat.message || "",
           },
           android: {
             priority: "high",
@@ -394,6 +396,8 @@ exports.createChat = async (req, res) => {
             type: "CHAT",
             chatTopicId: chatTopic._id ? chatTopic._id.toString() : "",
             senderUserId: senderUser._id ? senderUser._id.toString() : "",
+            senderName: senderUser?.name || "",
+            message: chat.message || "",
           },
           android: {
             priority: "high",

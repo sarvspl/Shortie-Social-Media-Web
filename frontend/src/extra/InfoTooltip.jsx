@@ -28,14 +28,18 @@ const InfoTooltip = ({ title, content }) => {
             title={
                 <div>
                     <h6 style={{ margin: "0 0 8px 0", fontWeight: "600" }}>{title}</h6>
-                    {content?.map((item, index) => (
-                        <div key={index} style={{ marginBottom: "8px" }}>
-                            <strong>{item.label}</strong>
-                            <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.4" }}>
-                                {item.description}
-                            </p>
-                        </div>
-                    ))}
+                    {Array.isArray(content) ? (
+                        content.map((item, index) => (
+                            <div key={index} style={{ marginBottom: "8px" }}>
+                                {item?.label && <strong>{item.label}</strong>}
+                                <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.4" }}>
+                                    {item?.description || item}
+                                </p>
+                            </div>
+                        ))
+                    ) : typeof content === "string" ? (
+                        <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.4" }}>{content}</p>
+                    ) : null}
                 </div>
             }
             arrow

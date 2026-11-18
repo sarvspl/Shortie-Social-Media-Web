@@ -1353,11 +1353,20 @@ exports.likeOrDislikeOfPost = async (req, res) => {
         const payload = {
           token: postUser?.fcmToken,
           notification: {
-            title: `${user.name || "Post Liked"}`,
-            body: "Hey there! A user has just liked your post. Check it out now!",
+            title: "🔔 Post Liked Alert! 🔔",
+            body: `${user?.name || "A user"} liked your post!`,
           },
           data: {
             type: "POSTLIKE",
+            postId: post._id ? post._id.toString() : "",
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "general_notifications",
+              sound: "default",
+              clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
           },
         };
 

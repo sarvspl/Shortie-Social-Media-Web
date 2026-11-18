@@ -80,6 +80,15 @@ exports.followUnfollowUser = async (req, res) => {
           },
           data: {
             type: "FOLLOW",
+            userId: fromUser._id ? fromUser._id.toString() : "",
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "general_notifications",
+              sound: "default",
+              clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
           },
         };
 

@@ -10,7 +10,7 @@ import { getwithdrawRequest } from "@/store/withdrawRequestSlice";
 import { baseURL } from "@/util/config";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Box, Divider, IconButton, Modal, Typography } from "@mui/material";
+import { Box, Divider, IconButton, Modal, Typography, Dialog, DialogContent } from "@mui/material";
 import Input, { Textarea } from "@/extra/Input";
 import noImage from "../../assets/images/noImage.png";
 import CustomButton from "@/extra/Button";
@@ -43,6 +43,136 @@ const labelStyle = {
   marginBottom: "6px",
   display: "block",
   color: "#444",
+};
+
+const ImagePreview = ({ src, restricted }: { src: string; restricted?: boolean }) => {
+  const [open, setOpen] = useState(false);
+
+  const imageUrl =
+    src && src.startsWith("http")
+      ? src
+      : src
+      ? `${baseURL}/${src}`
+      : "/images/user.png";
+
+  return (
+    <>
+      <div
+        style={{ position: "relative", display: "inline-block", cursor: "pointer" }}
+        onClick={() => setOpen(true)}
+      >
+        <img
+          src={imageUrl}
+          alt="Support Attachment"
+          style={{
+            opacity: restricted === true ? 0.5 : 1,
+            width: "90px",
+            height: "90px",
+            objectFit: "cover",
+            borderRadius: "8px",
+            border: "2px solid #6941C6",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+            transition: "transform 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = "scale(1.05)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+          }}
+          onError={(e: any) => {
+            e.target.onerror = null;
+            e.target.src = "/images/user.png";
+          }}
+        />
+        <div
+          style={{
+            fontSize: "11px",
+            color: "#6941C6",
+            fontWeight: 600,
+            marginTop: "4px",
+            display: "flex",
+            alignItems: "center",
+            gap: "3px",
+          }}
+        >
+          🔍 Click to view full image
+        </div>
+      </div>
+
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="md"
+        sx={{ zIndex: 1400 }}
+        PaperProps={{
+          style: {
+            borderRadius: "14px",
+            overflow: "hidden",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+          },
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 18px",
+            borderBottom: "1px solid #eee",
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <span style={{ fontWeight: 600, fontSize: "15px", color: "#333" }}>
+            Attached Image Preview
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: "13px",
+                color: "#6941C6",
+                fontWeight: 600,
+                textDecoration: "underline",
+              }}
+            >
+              Open Original ↗
+            </a>
+            <IconButton onClick={() => setOpen(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </div>
+        </div>
+        <DialogContent
+          style={{
+            padding: "16px",
+            backgroundColor: "#1a1a1a",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "300px",
+          }}
+        >
+          <img
+            src={imageUrl}
+            alt="Support Attachment Full"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "75vh",
+              objectFit: "contain",
+              borderRadius: "4px",
+            }}
+            onError={(e: any) => {
+              e.target.onerror = null;
+              e.target.src = "/images/user.png";
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 };
 
 const AcceptedSupportRequest = (props) => {
@@ -363,21 +493,12 @@ const AcceptedSupportRequest = (props) => {
                     </div>
 
                     <div className="col-12 mt-3 text-about">
-                      <div>Image</div>
-                      <img
-                        src={infoData?.image ? infoData?.image : "/images/user.png"}
-                        style={{
-                          opacity:
-                            infoData?.isComplaintImageRestricted === true
-                              ? 0.5
-                              : 1,
-                        }}
-                        width="80px"
-                        height="80px"
-                        onError={(e: any) => {
-                          e.target.onerror = null;
-                          e.target.src = "/images/user.png";
-                        }}
+                      <div className="mb-2" style={{ fontWeight: 500, fontSize: "14px" }}>
+                        Attached Image
+                      </div>
+                      <ImagePreview
+                        src={infoData?.image}
+                        restricted={infoData?.isComplaintImageRestricted}
                       />
                     </div>
                   </div>

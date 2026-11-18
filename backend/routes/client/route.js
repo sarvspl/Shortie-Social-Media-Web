@@ -32,6 +32,7 @@ const story = require("./story.route");
 const storyView = require("./storyView.route");
 const file = require("./file.route");
 const translation = require("./translation.route");
+const agora = require("./agora.route");
 
 
 //exports client's route.js
@@ -64,6 +65,7 @@ route.use("/story", story);
 route.use("/storyView", storyView);
 route.use("/file", file);
 route.use("/translation",  translation);
+route.use("/agora", agora);
 
 
 module.exports = route;

@@ -14,6 +14,9 @@ const settingSchema = new mongoose.Schema(
     zegoAppSignIn: { type: String, default: "ZEGO APP SIGN IN" },
     zegoServerSecret: { type: String, default: "ZEGO SERVER SECRET" },
 
+    agoraAppId: { type: String, default: "fb62b621f060417bb8220f8a97e4f6e1" },
+    agoraAppCertificate: { type: String, default: "df067132cce94bcd89c775863fd6dff8" },
+
     paymentGateway: { type: Array, default: [] },
     isFakeData: { type: Boolean, default: false },
 

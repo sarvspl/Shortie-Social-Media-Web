@@ -179,6 +179,16 @@ exports.liveUser = async (req, res) => {
         console.warn("Live notification setup error:", notifyErr.message);
       }
     }
+
+    if (global.io) {
+      global.io.emit("liveUserStarted", {
+        userId: existUser._id ? existUser._id.toString() : "",
+        name: existUser?.name || "",
+        image: existUser?.image || "",
+        liveHistoryId: liveHistory._id ? liveHistory._id.toString() : "",
+        liveUserObjId: liveUser._id ? liveUser._id.toString() : "",
+      });
+    }
   } catch (error) {
     console.log(error);
     if (!res.headersSent) {
@@ -491,11 +501,36 @@ exports.fetchPkInvitations = async (req, res) => {
 
     const userId = new mongoose.Types.ObjectId(req.query.userId);
 
+    // Auto-clean stale live sessions older than 4 hours
+    try {
+      const staleCutoff = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      await LiveUser.deleteMany({ createdAt: { $lt: staleCutoff } });
+    } catch (cleanupErr) {
+      console.warn("PK stale cleanup warning:", cleanupErr.message);
+    }
+
     const data = await LiveUser.aggregate([
       {
         $match: {
           isPkMode: false,
           userId: { $ne: userId },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "liveUserInfo",
+        },
+      },
+      {
+        $unwind: "$liveUserInfo",
+      },
+      {
+        $match: {
+          "liveUserInfo.isLive": true,
+          "liveUserInfo.isBlock": false,
         },
       },
       {

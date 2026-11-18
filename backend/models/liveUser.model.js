@@ -16,6 +16,9 @@ const liveUserSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     liveHistoryId: { type: mongoose.Schema.Types.ObjectId, ref: "LiveHistory" },
 
+    agoraToken: { type: String, default: "" },
+    agoraAppId: { type: String, default: "" },
+
     isPkMode: { type: Boolean, default: false },
     isPkRound: { type: Boolean, default: false },
     pkEndTime: { type: String, default: null },

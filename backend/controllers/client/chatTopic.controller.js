@@ -117,7 +117,7 @@ exports.getChatList = async (req, res) => {
                 {
                   $match: {
                     isRead: false,
-                    senderUserId: { $ne: userId },
+                    $expr: { $ne: [{ $toString: "$senderUserId" }, { $toString: userId }] },
                   },
                 },
                 { $count: "unreadCount" },
@@ -159,12 +159,18 @@ exports.getChatList = async (req, res) => {
                     duration: 1,
                     createdAt: 1,
                     backgroundSong: {
-                      _id: "$backgroundSong._id",
-                      songTitle: "$backgroundSong.songTitle",
-                      songImage: "$backgroundSong.songImage",
-                      singerName: "$backgroundSong.singerName",
-                      songTime: "$backgroundSong.songTime",
-                      songLink: "$backgroundSong.songLink",
+                      $cond: {
+                        if: { $ifNull: ["$backgroundSong._id", false] },
+                        then: {
+                          _id: "$backgroundSong._id",
+                          songTitle: "$backgroundSong.songTitle",
+                          songImage: "$backgroundSong.songImage",
+                          singerName: "$backgroundSong.singerName",
+                          songTime: "$backgroundSong.songTime",
+                          songLink: "$backgroundSong.songLink",
+                        },
+                        else: null,
+                      },
                     },
                   },
                 },
@@ -274,12 +280,18 @@ exports.getChatList = async (req, res) => {
                     duration: 1,
                     createdAt: 1,
                     backgroundSong: {
-                      _id: "$backgroundSong._id",
-                      songTitle: "$backgroundSong.songTitle",
-                      songImage: "$backgroundSong.songImage",
-                      singerName: "$backgroundSong.singerName",
-                      songTime: "$backgroundSong.songTime",
-                      songLink: "$backgroundSong.songLink",
+                      $cond: {
+                        if: { $ifNull: ["$backgroundSong._id", false] },
+                        then: {
+                          _id: "$backgroundSong._id",
+                          songTitle: "$backgroundSong.songTitle",
+                          songImage: "$backgroundSong.songImage",
+                          singerName: "$backgroundSong.singerName",
+                          songTime: "$backgroundSong.songTime",
+                          songLink: "$backgroundSong.songLink",
+                        },
+                        else: null,
+                      },
                     },
                   },
                 },
@@ -464,7 +476,7 @@ exports.getChatList = async (req, res) => {
                 {
                   $match: {
                     isRead: false,
-                    senderUserId: { $ne: userId },
+                    $expr: { $ne: [{ $toString: "$senderUserId" }, { $toString: userId }] },
                   },
                 },
                 { $count: "unreadCount" },
@@ -506,12 +518,18 @@ exports.getChatList = async (req, res) => {
                     duration: 1,
                     createdAt: 1,
                     backgroundSong: {
-                      _id: "$backgroundSong._id",
-                      songTitle: "$backgroundSong.songTitle",
-                      songImage: "$backgroundSong.songImage",
-                      singerName: "$backgroundSong.singerName",
-                      songTime: "$backgroundSong.songTime",
-                      songLink: "$backgroundSong.songLink",
+                      $cond: {
+                        if: { $ifNull: ["$backgroundSong._id", false] },
+                        then: {
+                          _id: "$backgroundSong._id",
+                          songTitle: "$backgroundSong.songTitle",
+                          songImage: "$backgroundSong.songImage",
+                          singerName: "$backgroundSong.singerName",
+                          songTime: "$backgroundSong.songTime",
+                          songLink: "$backgroundSong.songLink",
+                        },
+                        else: null,
+                      },
                     },
                   },
                 },

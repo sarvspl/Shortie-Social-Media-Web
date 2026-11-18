@@ -291,6 +291,7 @@ exports.reactToStory = async (req, res) => {
       });
 
       chatTopic.chatId = chat._id;
+      chatTopic.lastChatMessageTime = new Date();
 
       await Promise.all([messageRequest.save(), chatRequestTopic.save(), chatTopic.save(), chat.save()]);
 
@@ -337,6 +338,7 @@ exports.reactToStory = async (req, res) => {
       });
 
       chatTopic.chatId = chat._id;
+      chatTopic.lastChatMessageTime = new Date();
       chatTopic.isAccepted = true;
 
       await Promise.all([chat.save(), chatTopic.save()]);
@@ -459,6 +461,7 @@ exports.replyToStory = async (req, res) => {
       });
 
       chatTopic.chatId = chat._id;
+      chatTopic.lastChatMessageTime = new Date();
 
       await Promise.all([messageRequest.save(), chatRequestTopic.save(), chatTopic.save(), chat.save()]);
 
@@ -506,6 +509,7 @@ exports.replyToStory = async (req, res) => {
       });
 
       chatTopic.chatId = chat._id;
+      chatTopic.lastChatMessageTime = new Date();
       chatTopic.isAccepted = true;
 
       await Promise.all([chat.save(), chatTopic.save()]);

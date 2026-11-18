@@ -13,6 +13,7 @@ import { projectName } from "@/util/config";
 import {
   appSetting,
   coinSetting,
+  agoraSetting,
   zegoSetting,
   mediaModerationSetting,
   firebaseNotificationSetting,
@@ -72,6 +73,8 @@ interface SettingsState {
   sightengineUser: string;
   sightengineSecret: string;
 
+  agoraAppId: string;
+  agoraAppCertificate: string;
   zegoAppId: string;
   zegoAppSignIn: string;
   zegoServerSecret: string;
@@ -123,6 +126,8 @@ const GlobalSettings = () => {
     sightengineUser: "",
     sightengineSecret: "",
 
+    agoraAppId: "",
+    agoraAppCertificate: "",
     zegoAppId: "",
     zegoAppSignIn: "",
     zegoServerSecret: "",
@@ -177,6 +182,8 @@ const GlobalSettings = () => {
         iosLicenseKey: settingData?.iosLicenseKey || "",
         sightengineUser: settingData?.sightengineUser || "",
         sightengineSecret: settingData?.sightengineSecret || "",
+        agoraAppId: settingData?.agoraAppId || "",
+        agoraAppCertificate: settingData?.agoraAppCertificate || "",
         zegoAppId: settingData?.zegoAppId || "",
         zegoAppSignIn: settingData?.zegoAppSignIn || "",
         zegoServerSecret: settingData?.zegoServerSecret || "",
@@ -254,6 +261,8 @@ const GlobalSettings = () => {
     if (settings.iosLicenseKey !== initialValues.iosLicenseKey) changedData.iosLicenseKey = settings.iosLicenseKey;
     if (settings.sightengineUser !== initialValues.sightengineUser) changedData.sightengineUser = settings.sightengineUser;
     if (settings.sightengineSecret !== initialValues.sightengineSecret) changedData.sightengineSecret = settings.sightengineSecret;
+    if (settings.agoraAppId !== initialValues.agoraAppId) changedData.agoraAppId = settings.agoraAppId;
+    if (settings.agoraAppCertificate !== initialValues.agoraAppCertificate) changedData.agoraAppCertificate = settings.agoraAppCertificate;
     if (settings.zegoAppId !== initialValues.zegoAppId) changedData.zegoAppId = settings.zegoAppId;
     if (settings.zegoAppSignIn !== initialValues.zegoAppSignIn) changedData.zegoAppSignIn = settings.zegoAppSignIn;
     if (settings.zegoServerSecret !== initialValues.zegoServerSecret) changedData.zegoServerSecret = settings.zegoServerSecret;
@@ -564,6 +573,40 @@ const GlobalSettings = () => {
         </div>
       </SettingsCard>
 
+      {/* Agora Settings */}
+      <SettingsCard
+        title="Agora Live Streaming Configuration"
+        description="Configure Agora App ID & Certificate for Live Streaming & Real-Time Voice/Video"
+        icon={<Video size={18} />}
+        tooltipTitle="Agora Setting"
+        tooltipContent={agoraSetting}
+      >
+        <div className="row g-3">
+          <div className="col-12 col-md-6">
+            <FormField
+              label="Agora App ID"
+              name="agoraAppId"
+              value={settings.agoraAppId}
+              placeholder="e.g. fb62b621f060417bb8220f8a97e4f6e1"
+              onChange={(e) =>
+                setSettings({ ...settings, agoraAppId: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="col-12 col-md-6">
+            <FormField
+              label="Agora App Certificate"
+              name="agoraAppCertificate"
+              value={settings.agoraAppCertificate}
+              placeholder="e.g. df067132cce94bcd89c775863fd6dff8"
+              onChange={(e) =>
+                setSettings({ ...settings, agoraAppCertificate: e.target.value })
+              }
+            />
+          </div>
+        </div>
+      </SettingsCard>
       {/* Zego Settings */}
       <SettingsCard
         title="Zego Configuration"

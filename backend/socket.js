@@ -24,6 +24,10 @@ const mongoose = require("mongoose");
 //generateHistoryUniqueId
 const { generateHistoryUniqueId } = require("./util/generateHistoryUniqueId");
 
+// In-memory maps for multi-live co-host requests and participants
+const liveCoHostRequests = new Map(); // liveHistoryId -> Map(userId -> requestData)
+const liveCoHostParticipants = new Map(); // liveHistoryId -> Map(userId -> participantData)
+
 io.on("connection", async (socket) => {
   console.log("Socket Connection done Client ID: ", socket.id);
   console.log("socket.connected:           ", socket.connected);
@@ -244,6 +248,9 @@ io.on("connection", async (socket) => {
     const parsedData = JSON.parse(data);
     console.log("liveRoomConnect connected (parsed):   ", parsedData);
 
+    if (parsedData?.liveHistoryId) {
+      socket.join(parsedData.liveHistoryId);
+    }
     const sockets = await io.in(globalRoom).fetchSockets();
     sockets?.length ? sockets[0].join(parsedData.liveHistoryId) : console.log("sockets not able to emit");
 
@@ -378,6 +385,9 @@ io.on("connection", async (socket) => {
       }),
     ]);
 
+    if (dataOfaddView?.liveHistoryId) {
+      socket.join(dataOfaddView.liveHistoryId);
+    }
     sockets?.length ? sockets[0].join(dataOfaddView.liveHistoryId) : console.log("sockets not able to emit");
 
     //If PK mode active
@@ -1316,13 +1326,249 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("endLive", async (data) => {
+  
+    // =========================================================================
+    // MULTI-LIVE / CO-HOST HANDLERS
+    // =========================================================================
+
+    async function getHostUserIdForLiveHistory(liveHistoryId, liveUserObjId) {
+      try {
+        if (liveUserObjId) {
+          const liveUser = await LiveUser.findById(liveUserObjId).select("userId").lean();
+          if (liveUser?.userId) return liveUser.userId.toString();
+        }
+        if (liveHistoryId) {
+          const liveUser = await LiveUser.findOne({ liveHistoryId }).select("userId").lean();
+          if (liveUser?.userId) return liveUser.userId.toString();
+        }
+      } catch (err) {
+        console.error("Error looking up host userId:", err);
+      }
+      return null;
+    }
+
+    socket.on("callJoinRequest", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        const targetUserId = parseData?.userId?.toString();
+        console.log("SOCKET: callJoinRequest received:", parseData);
+
+        if (!liveHistoryId || !targetUserId) {
+          console.warn("SOCKET: Missing liveHistoryId or userId in callJoinRequest");
+          return;
+        }
+
+        socket.join(liveHistoryId);
+
+        if (!liveCoHostRequests.has(liveHistoryId)) {
+          liveCoHostRequests.set(liveHistoryId, new Map());
+        }
+        const roomRequests = liveCoHostRequests.get(liveHistoryId);
+        roomRequests.set(targetUserId, {
+          ...parseData,
+          isRequested: true,
+          isAccepted: false,
+        });
+
+        const requestList = Array.from(roomRequests.values());
+        const hostUserId = await getHostUserIdForLiveHistory(liveHistoryId, parseData?.liveUserObjId);
+
+        // Emit requestedUpdated to all sockets in the live room
+        io.in(liveHistoryId).emit("requestedUpdated", requestList);
+
+        // Emit directly to the target user's personal global room
+        io.in("globalRoom:" + targetUserId).emit("requestedUpdated", requestList);
+
+        // AND emit directly to the host's personal global room!
+        if (hostUserId && hostUserId !== targetUserId) {
+          io.in("globalRoom:" + hostUserId).emit("requestedUpdated", requestList);
+        }
+      } catch (err) {
+        console.error("Error in callJoinRequest socket event:", err);
+      }
+    });
+
+    socket.on("removeCallJoinRequest", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        const targetUserId = parseData?.userId?.toString();
+        console.log("SOCKET: removeCallJoinRequest received:", parseData);
+
+        if (liveHistoryId && liveCoHostRequests.has(liveHistoryId)) {
+          socket.join(liveHistoryId);
+          const roomRequests = liveCoHostRequests.get(liveHistoryId);
+          if (targetUserId) {
+            roomRequests.delete(targetUserId);
+          }
+          const requestList = Array.from(roomRequests.values());
+          const hostUserId = await getHostUserIdForLiveHistory(liveHistoryId, parseData?.liveUserObjId);
+
+          io.in(liveHistoryId).emit("requestedUpdated", requestList);
+          if (targetUserId) {
+            io.in("globalRoom:" + targetUserId).emit("requestedUpdated", requestList);
+          }
+          if (hostUserId && hostUserId !== targetUserId) {
+            io.in("globalRoom:" + hostUserId).emit("requestedUpdated", requestList);
+          }
+        }
+      } catch (err) {
+        console.error("Error in removeCallJoinRequest socket event:", err);
+      }
+    });
+
+    socket.on("addParticipantToCallJoin", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        const targetUserId = parseData?.userId?.toString();
+        console.log("SOCKET: addParticipantToCallJoin received:", parseData);
+
+        if (!liveHistoryId || !targetUserId) return;
+
+        socket.join(liveHistoryId);
+
+        // Remove from requests list
+        if (liveCoHostRequests.has(liveHistoryId)) {
+          liveCoHostRequests.get(liveHistoryId).delete(targetUserId);
+          const requestList = Array.from(liveCoHostRequests.get(liveHistoryId).values());
+          io.in(liveHistoryId).emit("requestedUpdated", requestList);
+          io.in("globalRoom:" + targetUserId).emit("requestedUpdated", requestList);
+        }
+
+        // Add to active participants
+        if (!liveCoHostParticipants.has(liveHistoryId)) {
+          liveCoHostParticipants.set(liveHistoryId, new Map());
+        }
+        const roomParticipants = liveCoHostParticipants.get(liveHistoryId);
+        roomParticipants.set(targetUserId, {
+          ...parseData,
+          agoraUid: parseData.agoraUid || `${targetUserId}_call`,
+          isAccepted: true,
+          isRequested: false,
+        });
+
+        const participantList = Array.from(roomParticipants.values());
+        const hostUserId = await getHostUserIdForLiveHistory(liveHistoryId, parseData?.liveUserObjId);
+
+        // Emit participantsUpdated to live room, participant, and host
+        io.in(liveHistoryId).emit("participantsUpdated", participantList);
+        io.in("globalRoom:" + targetUserId).emit("participantsUpdated", participantList);
+        if (hostUserId && hostUserId !== targetUserId) {
+          io.in("globalRoom:" + hostUserId).emit("participantsUpdated", participantList);
+        }
+
+        // Update DB LiveUser liveType to 2 (Multi-live)
+        if (parseData.liveUserObjId) {
+          LiveUser.findByIdAndUpdate(parseData.liveUserObjId, { $set: { liveType: 2 } }).catch(e => console.log(e));
+        }
+      } catch (err) {
+        console.error("Error in addParticipantToCallJoin socket event:", err);
+      }
+    });
+
+    socket.on("leftParticipantOfCallJoin", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        const targetUserId = parseData?.userId?.toString();
+        console.log("SOCKET: leftParticipantOfCallJoin received:", parseData);
+
+        if (!liveHistoryId) return;
+
+        socket.join(liveHistoryId);
+
+        if (liveCoHostParticipants.has(liveHistoryId)) {
+          const roomParticipants = liveCoHostParticipants.get(liveHistoryId);
+          if (targetUserId) {
+            roomParticipants.delete(targetUserId);
+          }
+          const participantList = Array.from(roomParticipants.values());
+          const hostUserId = await getHostUserIdForLiveHistory(liveHistoryId, parseData?.liveUserObjId);
+
+          io.in(liveHistoryId).emit("participantsUpdated", participantList);
+          if (targetUserId) {
+            io.in("globalRoom:" + targetUserId).emit("participantsUpdated", participantList);
+          }
+          if (hostUserId && hostUserId !== targetUserId) {
+            io.in("globalRoom:" + hostUserId).emit("participantsUpdated", participantList);
+          }
+
+          if (participantList.length === 0 && parseData.liveUserObjId) {
+            LiveUser.findByIdAndUpdate(parseData.liveUserObjId, { $set: { liveType: 1 } }).catch(e => console.log(e));
+          }
+        }
+      } catch (err) {
+        console.error("Error in leftParticipantOfCallJoin socket event:", err);
+      }
+    });
+
+    socket.on("updateMuteStatus", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        const targetUserId = parseData?.userId?.toString();
+        if (liveHistoryId && liveCoHostParticipants.has(liveHistoryId)) {
+          const p = liveCoHostParticipants.get(liveHistoryId).get(targetUserId);
+          if (p) p.isMute = parseData.isMute;
+          io.in(liveHistoryId).emit("participantsUpdated", Array.from(liveCoHostParticipants.get(liveHistoryId).values()));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    socket.on("updateCameraStatus", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        const targetUserId = parseData?.userId?.toString();
+        if (liveHistoryId && liveCoHostParticipants.has(liveHistoryId)) {
+          const p = liveCoHostParticipants.get(liveHistoryId).get(targetUserId);
+          if (p) p.isCameraEnabled = parseData.isCameraEnabled;
+          io.in(liveHistoryId).emit("participantsUpdated", Array.from(liveCoHostParticipants.get(liveHistoryId).values()));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    socket.on("updateLiveType", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        if (liveHistoryId) {
+          io.in(liveHistoryId).emit("updateLiveType", parseData);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    socket.on("updateHostCameraStatus", async (data) => {
+      try {
+        const parseData = typeof data === "string" ? JSON.parse(data) : data;
+        const liveHistoryId = parseData?.liveHistoryId?.toString();
+        if (liveHistoryId) {
+          io.in(liveHistoryId).emit("updateHostCameraStatus", parseData?.isCameraEnabled ?? true);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    socket.on("endLive", async (data) => {
     console.log("data in endLive: ", data);
 
     const parsedData = JSON.parse(data);
     console.log("parsedData in endLive: ", parsedData);
 
     io.in(parsedData?.liveHistoryId).emit("endLive", data);
+      if (parsedData?.liveHistoryId) {
+        liveCoHostRequests.delete(parsedData.liveHistoryId.toString());
+        liveCoHostParticipants.delete(parsedData.liveHistoryId.toString());
+      }
 
     try {
       const [user, liveHistory] = await Promise.all([User.findOne({ liveHistoryId: parsedData?.liveHistoryId }), LiveHistory.findById(parsedData?.liveHistoryId)]);
@@ -1358,6 +1604,22 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", async (reason) => {
     console.log(`socket disconnect ===============`, id, socket?.id, reason);
+    if (id) {
+      for (const [liveHistoryId, participants] of liveCoHostParticipants.entries()) {
+        if (participants.has(id)) {
+          participants.delete(id);
+          const participantList = Array.from(participants.values());
+          io.in(liveHistoryId).emit("participantsUpdated", participantList);
+          console.log(`[Disconnected user] Removed co-host ${id} from liveHistoryId ${liveHistoryId}`);
+        }
+      }
+      for (const [liveHistoryId, requests] of liveCoHostRequests.entries()) {
+        if (requests.has(id)) {
+          requests.delete(id);
+          io.in(liveHistoryId).emit("requestedUpdated", Array.from(requests.values()));
+        }
+      }
+    }
 
     if (globalRoom) {
       const socket = await io.in(globalRoom).fetchSockets();
@@ -1423,6 +1685,13 @@ io.on("connection", async (socket) => {
 
               const sockets = await io.in(opponentLiveUser.liveHistoryId.toString()).fetchSockets();
               console.log("sockets found in pkEndedByDisconnect [2]", sockets?.length);
+            }
+
+            // Also emit directly to both streamers personal global rooms and update DB
+            io.in("globalRoom:" + user._id.toString()).emit("pkEndedByDisconnect", { reason: "disconnect" });
+            if (opponentId) {
+              io.in("globalRoom:" + opponentId.toString()).emit("pkEndedByDisconnect", { reason: "opponent_disconnect" });
+              LiveUser.updateOne({ userId: opponentId }, { $set: { isPkMode: false, liveType: 1 } }).catch(e => console.log(e));
             }
           }
 

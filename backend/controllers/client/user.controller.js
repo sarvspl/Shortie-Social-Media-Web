@@ -479,6 +479,10 @@ exports.getProfile = async (req, res) => {
       return res.status(200).json({ status: false, message: "User does not found!" });
     }
 
+    if (req.query.fcmToken && typeof req.query.fcmToken === "string" && req.query.fcmToken.trim().length > 20 && !req.query.fcmToken.startsWith("token_") && !req.query.fcmToken.startsWith("dummy") && !req.query.fcmToken.startsWith("connect_default")) {
+      User.updateOne({ _id: user._id }, { $set: { fcmToken: req.query.fcmToken.trim() } }).catch((err) => console.warn("Failed updating fcmToken in getProfile:", err.message));
+    }
+
     if (user.isBlock) {
       return res.status(200).json({ status: false, message: "you are blocked by the admin." });
     }
@@ -614,6 +618,10 @@ exports.getUserCoin = async (req, res) => {
     const user = await User.findOne({ _id: req.query.userId }).lean();
     if (!user) {
       return res.status(200).json({ status: false, message: "User does not found!" });
+    }
+
+    if (req.query.fcmToken && typeof req.query.fcmToken === "string" && req.query.fcmToken.trim().length > 20 && !req.query.fcmToken.startsWith("token_") && !req.query.fcmToken.startsWith("dummy") && !req.query.fcmToken.startsWith("connect_default")) {
+      User.updateOne({ _id: user._id }, { $set: { fcmToken: req.query.fcmToken.trim() } }).catch((err) => console.warn("Failed updating fcmToken in getProfile:", err.message));
     }
 
     if (user.isBlock) {

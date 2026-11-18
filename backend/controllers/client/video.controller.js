@@ -1444,10 +1444,19 @@ exports.likeOrDislikeOfVideo = async (req, res) => {
           token: videoUser?.fcmToken,
           notification: {
             title: "🔔 Video Liked Alert! 🔔",
-            body: "Hey there! A user has just liked your video. Check it out now!",
+            body: `${user?.name || "A user"} liked your video!`,
           },
           data: {
             type: "VIDEOLIKE",
+            videoId: video._id ? video._id.toString() : "",
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "general_notifications",
+              sound: "default",
+              clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
           },
         };
 

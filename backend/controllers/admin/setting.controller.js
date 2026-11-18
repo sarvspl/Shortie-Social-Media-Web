@@ -107,6 +107,8 @@ exports.updateSetting = async (req, res) => {
     setting.zegoAppId = req.body.zegoAppId ? req.body.zegoAppId : setting.zegoAppId;
     setting.zegoAppSignIn = req.body.zegoAppSignIn ? req.body.zegoAppSignIn : setting.zegoAppSignIn;
     setting.zegoServerSecret = req?.body?.zegoServerSecret ? req?.body?.zegoServerSecret : setting?.zegoServerSecret;
+    setting.agoraAppId = req.body.agoraAppId ? req.body.agoraAppId : setting.agoraAppId;
+    setting.agoraAppCertificate = req.body.agoraAppCertificate ? req.body.agoraAppCertificate : setting.agoraAppCertificate;
 
     setting.resendApiKey = req.body.resendApiKey ? req.body.resendApiKey : setting.resendApiKey;
     setting.pkEndTime = req.body.pkEndTime ? req.body.pkEndTime : setting.pkEndTime;

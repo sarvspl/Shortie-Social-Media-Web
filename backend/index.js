@@ -67,6 +67,7 @@ const db = require("./util/connection");
 
 const routes = require("./routes/route");
 app.use(routes);
+app.use("/api", routes);
 
 db.on("error", () => {
   console.log("Connection Error: ");

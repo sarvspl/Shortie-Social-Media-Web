@@ -650,6 +650,31 @@ export const zegoSetting = [
     },
 ];
 
+export const agoraSetting = [
+    {
+        label: "Agora App ID",
+        description: (
+            <>
+                Enter the unique App ID from your Agora Developer Console.
+                {" "}
+                <a
+                    href="https://console.agora.io/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500"
+                >
+                    Get it from Agora Console
+                </a>
+                .
+            </>
+        ),
+    },
+    {
+        label: "Agora App Certificate",
+        description: "Primary Certificate used by the backend to securely generate RTC/RTM tokens for live video streaming and signaling.",
+    },
+];
+
 
 export const apiKeySetting = [
     {

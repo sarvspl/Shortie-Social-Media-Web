@@ -28,6 +28,8 @@ module.exports = {
   "termsOfUsePolicyLink": "",
   "zegoAppId": "",
   "zegoAppSignIn": "",
+  "agoraAppId": "fb62b621f060417bb8220f8a97e4f6e1",
+  "agoraAppCertificate": "df067132cce94bcd89c775863fd6dff8",
   "paymentGateway": [],
   "isFakeData": true,
   "durationOfShorts": 2000,

@@ -1,7 +1,7 @@
 //dns setup for Atlas SRV resolution
 const dns = require("dns");
 try {
-  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+  dns.setDefaultResultOrder && dns.setDefaultResultOrder("ipv4first");
 } catch (e) {}
 
 //mongoose
