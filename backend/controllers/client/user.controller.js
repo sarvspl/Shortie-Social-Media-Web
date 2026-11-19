@@ -212,6 +212,10 @@ exports.loginOrSignUp = async (req, res) => {
       if (!user.userName && req.body.userName) user.userName = req.body.userName.trim();
       if (!user.image && req.body.image) user.image = req.body.image.trim();
       user.fcmToken = req.body.fcmToken ? req.body.fcmToken.trim() : user.fcmToken;
+      // If admin-created fake user has no loginType, set it now based on how they are logging in
+      if (!user.loginType && loginType) user.loginType = loginType;
+      // If admin-created fake user has no identity, set it now
+      if (!user.identity && req.body.identity) user.identity = req.body.identity;
       user.lastlogin = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
       await user.save();
 

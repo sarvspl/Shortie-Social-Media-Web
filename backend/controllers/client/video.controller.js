@@ -1304,12 +1304,17 @@ exports.getAllVideos = async (req, res, next) => {
         allVideos = [...realVideoOfUser, ...fakeVideoOfUser];
         //allVideos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        allVideos = allVideos.sort(() => 0.5 - Math.random());
+        // Show followed users' videos first, then shuffle the rest
+        const followed = allVideos.filter((v) => v.isFollow);
+        const others = allVideos.filter((v) => !v.isFollow).sort(() => 0.5 - Math.random());
+        allVideos = [...followed, ...others];
       } else {
         allVideos = await Video.aggregate([{ $match: { isFake: false } }, ...data]);
-        //allVideos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        allVideos = allVideos.sort(() => 0.5 - Math.random());
+        // Show followed users' videos first, then shuffle the rest
+        const followed = allVideos.filter((v) => v.isFollow);
+        const others = allVideos.filter((v) => !v.isFollow).sort(() => 0.5 - Math.random());
+        allVideos = [...followed, ...others];
       }
 
       const paginatedVideos = allVideos.slice((start - 1) * limit, start * limit);
