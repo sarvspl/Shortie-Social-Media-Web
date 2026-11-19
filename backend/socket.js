@@ -1430,7 +1430,9 @@ io.on("connection", async (socket) => {
         socket.join(liveHistoryId);
 
         // Remove from requests list
+        let existingReq = {};
         if (liveCoHostRequests.has(liveHistoryId)) {
+          existingReq = liveCoHostRequests.get(liveHistoryId).get(targetUserId) || {};
           liveCoHostRequests.get(liveHistoryId).delete(targetUserId);
           const requestList = Array.from(liveCoHostRequests.get(liveHistoryId).values());
           io.in(liveHistoryId).emit("requestedUpdated", requestList);
@@ -1443,6 +1445,7 @@ io.on("connection", async (socket) => {
         }
         const roomParticipants = liveCoHostParticipants.get(liveHistoryId);
         roomParticipants.set(targetUserId, {
+          ...existingReq,
           ...parseData,
           agoraUid: parseData.agoraUid || `${targetUserId}_call`,
           isAccepted: true,

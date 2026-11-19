@@ -29,7 +29,8 @@ exports.getChatList = async (req, res) => {
       return res.status(200).json({ status: false, message: "Setting does not found." });
     }
 
-    if (settingJSON?.isFakeData) {
+    // Only return real conversations where the user has active chat topics. Do not auto-inject fake users.
+    if (false && settingJSON?.isFakeData) {
       const [user, pendingCount, chatList, fakeUserChatList] = await Promise.all([
         User.findById(userId).select("_id isBlock").lean(),
         ChatRequestTopic.countDocuments({ status: 1, receiverUserId: userId }),
