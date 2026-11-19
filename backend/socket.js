@@ -364,8 +364,9 @@ io.on("connection", async (socket) => {
 
       socket.emit("getLiveHostInfo", liveUserInfo);
 
-      // Immediately provide live viewers list and view count to the connecting socket
+      // Immediately join the live room and provide live viewers list and view count to connecting socket
       if (liveUserInfo.liveHistoryId) {
+        socket.join(liveUserInfo.liveHistoryId.toString());
         const viewers = await LiveView.find({ liveHistoryId: liveUserInfo.liveHistoryId }).lean();
         socket.emit("listLiveViewers", viewers);
         socket.emit("addView", viewers.length);
@@ -393,9 +394,9 @@ io.on("connection", async (socket) => {
     ]);
 
     if (dataOfaddView?.liveHistoryId) {
-      socket.join(dataOfaddView.liveHistoryId);
+      socket.join(dataOfaddView.liveHistoryId.toString());
     }
-    sockets?.length ? sockets[0].join(dataOfaddView.liveHistoryId) : console.log("sockets not able to emit");
+    sockets?.length ? sockets[0].join(dataOfaddView.liveHistoryId.toString()) : console.log("sockets not able to emit");
 
     //If PK mode active
     if (pkLiveUser) {
@@ -408,7 +409,7 @@ io.on("connection", async (socket) => {
       ]);
 
       if (rankedLiveUser.length > 0) {
-        io.in(dataOfaddView.liveHistoryId).emit("refreshPkRankings", rankedLiveUser[0]);
+        io.in(dataOfaddView.liveHistoryId.toString()).emit("refreshPkRankings", rankedLiveUser[0]);
       }
 
       const topGiftersHost1 = topGifterHost1?.gifters?.sort((a, b) => b.totalCoins - a.totalCoins)?.slice(0, 5) || [];
@@ -419,27 +420,28 @@ io.on("connection", async (socket) => {
         topGiftersHost2,
       };
 
-      io.in(dataOfaddView.liveHistoryId).emit("updateTopGiftContributors", eventData);
+      io.in(dataOfaddView.liveHistoryId.toString()).emit("updateTopGiftContributors", eventData);
     }
 
-    if (user && liveUser) {
+    if (user) {
       if (!existLiveView) {
         console.log("new liveView in addView ");
 
         const liveView = new LiveView();
         liveView.userId = dataOfaddView.userId;
         liveView.liveHistoryId = dataOfaddView.liveHistoryId;
-        liveView.name = user.name;
-        liveView.userName = user.userName;
-        liveView.image = user.image;
+        liveView.name = user.name || user.userName || "Viewer";
+        liveView.userName = user.userName || "";
+        liveView.image = user.image || "";
         await liveView.save();
       }
     }
 
     const view = await LiveView.find({ liveHistoryId: dataOfaddView.liveHistoryId }).lean();
+    const liveHistoryIdStr = dataOfaddView.liveHistoryId.toString();
 
-    io.in(dataOfaddView.liveHistoryId).emit("addView", view.length);
-    io.in(dataOfaddView.liveHistoryId).emit("listLiveViewers", view);
+    io.in(liveHistoryIdStr).emit("addView", view.length);
+    io.in(liveHistoryIdStr).emit("listLiveViewers", view);
 
     // If in PK mode, bridge viewer update to opponent's room as well
     if (pkLiveUser && pkLiveUser.pkConfig) {
@@ -506,6 +508,19 @@ io.on("connection", async (socket) => {
 
     io.in(dataOflessView?.liveHistoryId).emit("lessView", liveView.length);
     io.in(dataOflessView?.liveHistoryId).emit("listLiveViewers", liveView);
+  });
+
+  // getLiveViewers: host can request the current list of viewers for Invite Multi-Live sheet
+  socket.on("getLiveViewers", async (data) => {
+    try {
+      const { liveHistoryId } = typeof data === "string" ? JSON.parse(data) : data;
+      if (!liveHistoryId) return;
+      const viewers = await LiveView.find({ liveHistoryId }).lean();
+      socket.emit("listLiveViewers", viewers);
+      console.log(`[getLiveViewers] Sent ${viewers.length} viewers to socket ${socket.id}`);
+    } catch (err) {
+      console.error("[getLiveViewers] error:", err);
+    }
   });
 
   socket.on("liveChat", async (data) => {

@@ -83,6 +83,12 @@ exports.getChatList = async (req, res) => {
               preserveNullAndEmptyArrays: true,
             },
           },
+          // Filter out fake users — only show real user conversations
+          {
+            $match: {
+              "user.isFake": { $ne: true },
+            },
+          },
           {
             $lookup: {
               from: "chats",
@@ -440,6 +446,12 @@ exports.getChatList = async (req, res) => {
             $unwind: {
               path: "$user",
               preserveNullAndEmptyArrays: true,
+            },
+          },
+          // Filter out fake users — only show real user conversations
+          {
+            $match: {
+              "user.isFake": { $ne: true },
             },
           },
           {
