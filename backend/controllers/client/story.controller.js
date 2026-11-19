@@ -41,7 +41,7 @@ exports.uploadStory = async (req, res) => {
     }
 
     const [user, backgroundSong] = await Promise.all([
-      User.findOne({ _id: req.body.userId, isFake: false }).select("_id isBlock").lean(),
+      User.findOne({ _id: req.body.userId }).select("_id isBlock").lean(),
       req.body.backgroundSong ? Song.findById(req.body.backgroundSong).select("_id").lean() : null, // Only fetch backgroundSong if provided
     ]);
 
@@ -129,7 +129,7 @@ exports.viewStory = async (req, res) => {
       });
     }
 
-    const [user, story, alreadyViewed] = await Promise.all([User.findOne({ _id: userId, isFake: false }).select("_id isBlock").lean(), Story.findById(storyId).select("_id").lean(), StoryView.findOne({ userId, storyId }).select("_id").lean()]);
+    const [user, story, alreadyViewed] = await Promise.all([User.findOne({ _id: userId }).select("_id isBlock").lean(), Story.findById(storyId).select("_id").lean(), StoryView.findOne({ userId, storyId }).select("_id").lean()]);
 
     if (!user) {
       return res.status(200).json({
@@ -553,7 +553,7 @@ exports.deleteStory = async (req, res) => {
       });
     }
 
-    const [user, story] = await Promise.all([User.findOne({ _id: userId, isFake: false }).select("_id"), Story.findOne({ _id: storyId, user: userId })]);
+    const [user, story] = await Promise.all([User.findOne({ _id: userId }).select("_id"), Story.findOne({ _id: storyId, user: userId })]);
 
     if (!user) {
       return res.status(200).json({
@@ -608,7 +608,7 @@ exports.getFollowedUserStories = async (req, res) => {
       return res.status(200).json({ status: false, message: "userId is required." });
     }
 
-    const [user] = await Promise.all([User.findOne({ _id: userId, isFake: false }, "_id isBlock").lean()]);
+    const [user] = await Promise.all([User.findOne({ _id: userId }, "_id isBlock").lean()]);
 
     if (!user) {
       return res.status(200).json({ status: false, message: "User not found." });
@@ -943,7 +943,7 @@ exports.getOwnStories = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ _id: userId, isFake: false }, "_id name userName image isBlock isProfileImageBanned");
+    const user = await User.findOne({ _id: userId }, "_id name userName image isBlock isProfileImageBanned");
 
     if (!user) {
       return res.status(200).json({ status: false, message: "User not found." });

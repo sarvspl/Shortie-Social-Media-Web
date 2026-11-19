@@ -186,16 +186,21 @@ const FakeUser = ({ startDate, endDate, multiButtonSelectNavigate }) => {
           style={{ cursor: "pointer", paddingLeft: "24%" }}
           onClick={() => handleRedirect(row, "manageUser")}
         >
-          {row?.image && (
-            <img
-              src={row?.image}
-              width="50px"
-              height="50px"
-              onError={(e) => {
-                e.currentTarget.src = "/images/user.png";
-              }}
-            />
-          )}
+          <img
+            src={
+              row?.image
+                ? row.image.includes("192.168.1.75")
+                  ? row.image.replace("http://192.168.1.75:5050", "http://localhost:5050")
+                  : row.image
+                : "/images/user.png"
+            }
+            width="50px"
+            height="50px"
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+            onError={(e) => {
+              e.currentTarget.src = "/images/user.png";
+            }}
+          />
           <span className="text-capitalize ms-3  cursorPointer text-nowrap">
             {row?.name}
           </span>

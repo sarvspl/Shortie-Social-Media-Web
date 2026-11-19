@@ -62,7 +62,7 @@ exports.uploadPost = async (req, res, next) => {
       return res.status(200).json({ status: false, message: "Oops ! Invalid details." });
     }
 
-    const [uniquePostId, user] = await Promise.all([generateUniqueVideoOrPostId(), User.findOne({ _id: req.query.userId, isFake: false })]);
+    const [uniquePostId, user] = await Promise.all([generateUniqueVideoOrPostId(), User.findOne({ _id: req.query.userId })]);
 
     if (!user) {
       if (req?.body?.postImage && Array.isArray(req.body.postImage)) {
@@ -1239,7 +1239,7 @@ exports.deletePostOfUser = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.query.userId);
     const postId = new mongoose.Types.ObjectId(req.query.postId);
 
-    const [user, post] = await Promise.all([User.findOne({ _id: userId, isFake: false }), Post.findOne({ _id: postId, userId: userId, isFake: false })]);
+    const [user, post] = await Promise.all([User.findOne({ _id: userId }), Post.findOne({ _id: postId, userId: userId })]);
 
     if (!user) {
       return res.status(200).json({ status: false, message: "User does not found." });

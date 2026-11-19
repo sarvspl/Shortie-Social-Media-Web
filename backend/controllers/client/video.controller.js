@@ -58,7 +58,7 @@ exports.uploadvideo = async (req, res, next) => {
       return res.status(200).json({ status: false, message: "Oops ! Invalid details." });
     }
 
-    const [uniqueVideoId, user, song] = await Promise.all([generateUniqueVideoOrPostId(), User.findOne({ _id: req.query.userId, isFake: false }), Song.findById(req?.body?.songId)]);
+    const [uniqueVideoId, user, song] = await Promise.all([generateUniqueVideoOrPostId(), User.findOne({ _id: req.query.userId }), Song.findById(req?.body?.songId)]);
 
     if (!user) {
       if (req?.body?.videoImage) {
@@ -1336,7 +1336,7 @@ exports.deleteVideoOfUser = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.query.userId);
     const videoId = new mongoose.Types.ObjectId(req.query.videoId);
 
-    const [user, video] = await Promise.all([User.findOne({ _id: userId, isFake: false }), Video.findOne({ _id: videoId, userId: userId, isFake: false })]);
+    const [user, video] = await Promise.all([User.findOne({ _id: userId }), Video.findOne({ _id: videoId, userId: userId })]);
 
     if (!user) {
       return res.status(200).json({ status: false, message: "User does not found." });

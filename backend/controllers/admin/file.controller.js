@@ -25,7 +25,10 @@ exports.uploadContent = async (req, res) => {
     const activeStorage = await getActiveStorage();
 
     if (activeStorage === "local") {
-      url = `${process.env.baseURL}/uploads/${req.file.originalname}`;
+      const base = (process.env.baseURL && !process.env.baseURL.includes("192.168"))
+        ? process.env.baseURL
+        : (req ? `${req.protocol}://${req.get("host")}` : "https://connect.sarstage.online/api");
+      url = `${base}/uploads/${req.file.originalname}`;
     } else if (activeStorage === "digitalocean") {
       url = `${settingJSON?.doEndpoint}/${req.body.folderStructure}/${req.file.originalname}`;
     } else if (activeStorage === "aws") {

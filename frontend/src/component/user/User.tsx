@@ -195,9 +195,16 @@ const User = (props) => {
                     }}
                 >
                     <img
-                        src={row?.image}
+                        src={
+                          row?.image
+                            ? row.image.includes("192.168.1.75")
+                              ? row.image.replace("http://192.168.1.75:5050", "http://localhost:5050")
+                              : row.image
+                            : "/images/user.png"
+                        }
                         width="50px"
                         height="50px"
+                        style={{ borderRadius: "50%", objectFit: "cover" }}
                         onError={(e) => {
                             e.currentTarget.src = "/images/user.png";
                         }}
