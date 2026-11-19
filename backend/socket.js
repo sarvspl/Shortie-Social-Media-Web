@@ -363,6 +363,13 @@ io.on("connection", async (socket) => {
       }
 
       socket.emit("getLiveHostInfo", liveUserInfo);
+
+      // Immediately provide live viewers list and view count to the connecting socket
+      if (liveUserInfo.liveHistoryId) {
+        const viewers = await LiveView.find({ liveHistoryId: liveUserInfo.liveHistoryId }).lean();
+        socket.emit("listLiveViewers", viewers);
+        socket.emit("addView", viewers.length);
+      }
     } catch (err) {
       console.error("Error in getLiveHostInfo:", err);
     }
@@ -429,9 +436,20 @@ io.on("connection", async (socket) => {
       }
     }
 
-    const view = await LiveView.find({ liveHistoryId: dataOfaddView.liveHistoryId });
+    const view = await LiveView.find({ liveHistoryId: dataOfaddView.liveHistoryId }).lean();
 
     io.in(dataOfaddView.liveHistoryId).emit("addView", view.length);
+    io.in(dataOfaddView.liveHistoryId).emit("listLiveViewers", view);
+
+    // If in PK mode, bridge viewer update to opponent's room as well
+    if (pkLiveUser && pkLiveUser.pkConfig) {
+      const oppRoom = pkLiveUser.pkConfig.host1LiveId === dataOfaddView.liveHistoryId
+        ? pkLiveUser.pkConfig.host2LiveId
+        : pkLiveUser.pkConfig.host1LiveId;
+      if (oppRoom) {
+        io.in(oppRoom).emit("listLiveViewers", view);
+      }
+    }
 
     await Promise.all([
       LiveUser.updateOne(
@@ -478,7 +496,7 @@ io.on("connection", async (socket) => {
       await existLiveView.deleteOne();
     }
 
-    const liveView = await LiveView.find({ liveHistoryId: dataOflessView.liveHistoryId });
+    const liveView = await LiveView.find({ liveHistoryId: dataOflessView.liveHistoryId }).lean();
     console.log("liveView in lessView:  ", liveView.length);
 
     if (liveUser) {
@@ -487,21 +505,55 @@ io.on("connection", async (socket) => {
     }
 
     io.in(dataOflessView?.liveHistoryId).emit("lessView", liveView.length);
+    io.in(dataOflessView?.liveHistoryId).emit("listLiveViewers", liveView);
   });
 
   socket.on("liveChat", async (data) => {
-    const dataOfComment = JSON.parse(data);
-    console.log("parsed data in liveChat: ", dataOfComment);
+    try {
+      const dataOfComment = typeof data === "string" ? JSON.parse(data) : data;
+      console.log("parsed data in liveChat: ", dataOfComment);
 
-    const sockets = await io.in(globalRoom).fetchSockets();
-    sockets?.length ? sockets[0].join(dataOfComment.liveHistoryId) : console.log("sockets not able to emit liveChat");
+      if (dataOfComment?.liveHistoryId) {
+        socket.join(dataOfComment.liveHistoryId);
+      }
 
-    io.in(dataOfComment?.liveHistoryId).emit("liveChat", data);
+      // 1. Emit liveChat to current live room
+      io.in(dataOfComment?.liveHistoryId).emit("liveChat", data);
 
-    const liveHistory = await LiveHistory.findById(dataOfComment.liveHistoryId);
-    if (liveHistory) {
-      liveHistory.totalLiveChat += 1;
-      await liveHistory.save();
+      // 2. If in PK mode, bridge liveChat to opponent's room as well
+      const liveUser = await LiveUser.findOne({
+        $or: [
+          { liveHistoryId: dataOfComment?.liveHistoryId },
+          { "pkConfig.host1LiveId": dataOfComment?.liveHistoryId },
+          { "pkConfig.host2LiveId": dataOfComment?.liveHistoryId },
+        ],
+      }).select("isPkMode pkConfig").lean();
+
+      if (liveUser && liveUser.isPkMode && liveUser.pkConfig) {
+        const host1Room = liveUser.pkConfig.host1LiveId?.toString();
+        const host2Room = liveUser.pkConfig.host2LiveId?.toString();
+        const currentRoom = dataOfComment?.liveHistoryId?.toString();
+
+        if (host1Room && host1Room !== currentRoom) {
+          io.in(host1Room).emit("liveChat", data);
+        }
+        if (host2Room && host2Room !== currentRoom) {
+          io.in(host2Room).emit("liveChat", data);
+        }
+      }
+
+      // Also ensure sender gets chat if not in room
+      socket.emit("liveChat", data);
+
+      if (dataOfComment?.liveHistoryId) {
+        const liveHistory = await LiveHistory.findById(dataOfComment.liveHistoryId);
+        if (liveHistory) {
+          liveHistory.totalLiveChat += 1;
+          await liveHistory.save();
+        }
+      }
+    } catch (err) {
+      console.error("Error in liveChat socket event:", err);
     }
   });
 
@@ -1647,8 +1699,9 @@ io.on("connection", async (socket) => {
 
               await LiveUser.updateOne({ liveHistoryId }, { $set: { view: updatedViewCount } });
 
-              // socket.leave(liveHistoryId.toString());
+              const remainingViewers = await LiveView.find({ liveHistoryId }).lean();
               io.in(liveHistoryId.toString()).emit("lessView", updatedViewCount);
+              io.in(liveHistoryId.toString()).emit("listLiveViewers", remainingViewers);
 
               const socketCount = io.sockets.adapter.rooms.get(liveHistoryId.toString())?.size || 0;
 
