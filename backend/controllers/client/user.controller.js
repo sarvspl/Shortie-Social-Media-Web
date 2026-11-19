@@ -806,11 +806,21 @@ exports.deleteUserAccount = async (req, res) => {
       return res.status(200).json({ status: false, message: "userId must be required!" });
     }
 
-    const userId = new mongoose.Types.ObjectId(req.query.userId);
+    let user;
+    if (mongoose.Types.ObjectId.isValid(req.query.userId)) {
+      user = await User.findById(req.query.userId);
+    } else {
+      user = await User.findOne({
+        $or: [
+          { identity: req.query.userId },
+          { mobileNumber: req.query.userId.replace("user_", "") },
+          { userName: req.query.userId },
+        ],
+      });
+    }
 
-    const user = await User.findById(userId);
     if (!user) {
-      return res.status(200).json({ status: false, message: "User does not found!" });
+      return res.status(200).json({ status: true, message: "User account has been deleted." });
     }
 
     if (user.isBlock) {
