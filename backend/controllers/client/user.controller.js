@@ -1474,3 +1474,26 @@ exports.getUserProfileByGuest = async (req, res, next) => {
     return res.status(500).json({ status: false, message: error.message || "Internal Server Error" });
   }
 };
+
+// Get popular users sorted by receivedGift / receivedCoin / coin / rewards
+exports.getPopularUsers = async (req, res) => {
+  try {
+    const start = req.query.start ? parseInt(req.query.start) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+
+    const users = await User.find({ isBlock: false, image: { $exists: true, $ne: "" } })
+      .sort({ receivedCoin: -1, receivedGift: -1, coin: -1 })
+      .skip((start - 1) * limit)
+      .limit(limit)
+      .select("_id name userName image isVerified isFake coin receivedCoin receivedGift countryFlagImage isLive");
+
+    return res.status(200).json({
+      status: true,
+      message: "Popular users retrieved successfully.",
+      data: users,
+    });
+  } catch (error) {
+    console.log("Error in getPopularUsers:", error);
+    return res.status(500).json({ status: false, message: error.message || "Internal Server Error" });
+  }
+};

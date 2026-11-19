@@ -51,6 +51,9 @@ route.post("/signInOrRegister", checkAccessWithSecretKey(), validateFirebaseToke
 //retrieves users sorted by followers ( web )
 route.get("/getUsersByFollowers", checkAccessWithSecretKey(), UserController.getUsersByFollowers);
 
+//get popular users by gifts, rewards, coins
+route.get("/getPopularUsers", checkAccessWithSecretKey(), UserController.getPopularUsers);
+
 //get user profile with total count of followers, total count of following and total count of videos and posts's likes (for guest user who is not login) ( web )
 route.get("/getUserProfileByGuest", checkAccessWithSecretKey(), UserController.getUserProfileByGuest);
 
