@@ -1497,3 +1497,44 @@ exports.getPopularUsers = async (req, res) => {
     return res.status(500).json({ status: false, message: error.message || "Internal Server Error" });
   }
 };
+
+// Reset Allen coins and delete comments
+exports.resetAllenCoinsAndComments = async (req, res) => {
+  try {
+    const allenId = new mongoose.Types.ObjectId("6ae0436f1d64bc9a3a8c4655");
+
+    // 1. Delete all comments
+    const delComments = await PostOrVideoComment.deleteMany({});
+
+    // 2. Reset Allen coins
+    await User.updateOne(
+      { _id: allenId },
+      {
+        $set: {
+          coin: 0,
+          receivedCoin: 0,
+          purchasedCoin: 0,
+          receivedGift: 0,
+          totalWithdrawalCoin: 0,
+          totalWithdrawalAmount: 0,
+        },
+      }
+    );
+
+    // 3. Clear coin histories
+    await History.deleteMany({});
+
+    const allen = await User.findById(allenId).select("name userName coin receivedCoin receivedGift");
+
+    return res.status(200).json({
+      status: true,
+      message: "Allen coins reset to 0 and all comments deleted successfully.",
+      deletedComments: delComments.deletedCount,
+      allen,
+    });
+  } catch (error) {
+    console.log("Error in resetAllenCoinsAndComments:", error);
+    return res.status(500).json({ status: false, message: error.message || "Internal Server Error" });
+  }
+};
+

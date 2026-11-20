@@ -54,6 +54,10 @@ route.get("/getUsersByFollowers", checkAccessWithSecretKey(), UserController.get
 //get popular users by gifts, rewards, coins
 route.get("/getPopularUsers", checkAccessWithSecretKey(), UserController.getPopularUsers);
 
+//reset allen coins and comments
+route.post("/resetAllenCoinsAndComments", checkAccessWithSecretKey(), UserController.resetAllenCoinsAndComments);
+
+
 //get user profile with total count of followers, total count of following and total count of videos and posts's likes (for guest user who is not login) ( web )
 route.get("/getUserProfileByGuest", checkAccessWithSecretKey(), UserController.getUserProfileByGuest);
 
